@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Message } from '../lib/parser';
-import { createRoom, joinRoom, postMessage, subscribeRoom, type RoomMessage, type Side } from '../lib/rooms';
+import { createRoom, joinRoom, postMessage, subscribeRoom, fetchRoomMessages, type RoomMessage, type Side } from '../lib/rooms';
 
 /**
  * "Continue Chat" — take an imported conversation and keep it going, live,
@@ -40,9 +40,15 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
 
   useEffect(() => {
     if (phase !== 'chat' || !room) return;
-    const unsub = subscribeRoom(room.id, (m) =>
-      setLive((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m])));
-    return unsub;
+    let alive = true;
+    // merge keeps the list de-duped (by id) and in order — so the saved history
+    // loaded on (re)join and the live realtime inserts never double up.
+    const merge = (prev: RoomMessage[], m: RoomMessage) =>
+      prev.some((x) => x.id === m.id) ? prev : [...prev, m].sort((a, b) => (a.id || 0) - (b.id || 0));
+    const unsub = subscribeRoom(room.id, (m) => setLive((prev) => merge(prev, m)));
+    // load everything sent before now, so re-entering a room resumes the full chat
+    fetchRoomMessages(room.id).then((past) => { if (alive) setLive((prev) => past.reduce(merge, prev)); }).catch(() => {});
+    return () => { alive = false; unsub(); };
   }, [phase, room]);
 
   useEffect(() => { if (bodyRef.current) bodyRef.current.scrollTop = bodyRef.current.scrollHeight; }, [live, phase]);
@@ -68,7 +74,14 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
     try {
       const info = await joinRoom(joinId, joinPin.trim());
       if (!info) { setErr('Wrong PIN, or this chat no longer exists.'); return; }
-      setRoom({ id: joinId, pin: joinPin.trim(), side: 'guest', myName: info.guestName, otherName: info.creatorName, history: info.history });
+      // If the room's owner comes back, they resume as the creator (their own name).
+      const side: Side = info.isCreator ? 'creator' : 'guest';
+      setRoom({
+        id: joinId, pin: joinPin.trim(), side,
+        myName: info.isCreator ? info.creatorName : info.guestName,
+        otherName: info.isCreator ? info.guestName : info.creatorName,
+        history: info.history,
+      });
       setPhase('chat');
     } catch (e) { setErr((e as Error).message || String(e)); } finally { setBusy(false); }
   }

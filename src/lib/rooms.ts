@@ -14,6 +14,7 @@ export interface RoomInfo {
   creatorName: string;
   guestName: string;
   history: Message[];
+  isCreator: boolean;   // is the person joining the room's owner (vs the guest)?
 }
 export interface RoomMessage {
   id?: number;
@@ -42,10 +43,22 @@ export async function createRoom(pin: string, creatorName: string, guestName: st
 export async function joinRoom(id: string, pin: string): Promise<RoomInfo | null> {
   const { data, error } = await sb.rpc('join_room', { p_id: id, p_pin: pin });
   if (error) throw error;
-  const arr = (data || []) as { creator_name: string; guest_name: string; history: Message[] }[];
+  const arr = (data || []) as { creator_name: string; guest_name: string; history: Message[]; is_creator: boolean }[];
   if (!arr.length) return null;
   const r = arr[0];
-  return { creatorName: r.creator_name, guestName: r.guest_name, history: r.history || [] };
+  return { creatorName: r.creator_name, guestName: r.guest_name, history: r.history || [], isCreator: !!r.is_creator };
+}
+
+/** Load the saved continued messages of a room (everything sent after the import). */
+export async function fetchRoomMessages(id: string): Promise<RoomMessage[]> {
+  const { data, error } = await sb.from('room_messages')
+    .select('id, sender, sender_name, body, created_at')
+    .eq('room_id', id).order('id', { ascending: true });
+  if (error) throw error;
+  return (data || []).map((r) => ({
+    id: r.id as number, sender: r.sender as Side, senderName: r.sender_name as string,
+    body: r.body as string, createdAt: r.created_at as string,
+  }));
 }
 
 /** Post a message (the PIN is verified server-side; realtime then delivers it to both sides). */
