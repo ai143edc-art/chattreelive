@@ -120,6 +120,7 @@ export default function Uploader({ onLoaded, onContinue, onHistory, onBlank, onH
             <input
               ref={inputRef} type="file" multiple hidden
               accept=".zip,.txt,image/*,video/*,audio/*,.opus,.vcf,.pdf,.doc,.docx"
+              onClick={(e) => e.stopPropagation()}
               onChange={(e) => handleFiles([...(e.target.files || [])])}
             />
             {busy && (
