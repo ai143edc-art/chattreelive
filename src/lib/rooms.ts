@@ -1,0 +1,83 @@
+// "Continue Chat" — live 2-person rooms on top of an imported chat.
+// A room stores the imported history + the PIN (hashed server-side). New
+// messages are posted through a PIN-checked RPC and delivered live via
+// Supabase Realtime. The room id is an unguessable UUID (the shareable secret);
+// the PIN is the second gate. NOTE: this is an experiment — messages are NOT
+// end-to-end encrypted; they live on our server.
+import { sb } from './supabase';
+import type { Message } from './parser';
+import type { RealtimeChannel } from '@supabase/supabase-js';
+
+export type Side = 'creator' | 'guest';
+
+export interface RoomInfo {
+  creatorName: string;
+  guestName: string;
+  history: Message[];
+}
+export interface RoomMessage {
+  id?: number;
+  sender: Side;
+  senderName: string;
+  body: string;
+  createdAt?: string;
+}
+export interface MyRoom {
+  id: string;
+  creatorName: string;
+  guestName: string;
+  lastActiveAt: string;
+}
+
+/** Create a room from an imported chat. Creator must be logged in. Returns the room id. */
+export async function createRoom(pin: string, creatorName: string, guestName: string, history: Message[]): Promise<string> {
+  const { data, error } = await sb.rpc('create_room', {
+    p_pin: pin, p_creator_name: creatorName, p_guest_name: guestName, p_history: history,
+  });
+  if (error) throw error;
+  return data as string;
+}
+
+/** Join a room with its PIN. Returns room info + history, or null if the PIN is wrong / room gone. */
+export async function joinRoom(id: string, pin: string): Promise<RoomInfo | null> {
+  const { data, error } = await sb.rpc('join_room', { p_id: id, p_pin: pin });
+  if (error) throw error;
+  const arr = (data || []) as { creator_name: string; guest_name: string; history: Message[] }[];
+  if (!arr.length) return null;
+  const r = arr[0];
+  return { creatorName: r.creator_name, guestName: r.guest_name, history: r.history || [] };
+}
+
+/** Post a message (the PIN is verified server-side; realtime then delivers it to both sides). */
+export async function postMessage(id: string, pin: string, sender: Side, senderName: string, body: string): Promise<void> {
+  const { error } = await sb.rpc('post_room_message', {
+    p_id: id, p_pin: pin, p_sender: sender, p_sender_name: senderName, p_body: body,
+  });
+  if (error) throw error;
+}
+
+/** Live-subscribe to new messages in a room. Returns an unsubscribe function. */
+export function subscribeRoom(id: string, onMessage: (m: RoomMessage) => void): () => void {
+  const ch: RealtimeChannel = sb
+    .channel(`room-${id}`)
+    .on('postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'room_messages', filter: `room_id=eq.${id}` },
+      (payload) => {
+        const r = payload.new as { id: number; sender: Side; sender_name: string; body: string; created_at: string };
+        onMessage({ id: r.id, sender: r.sender, senderName: r.sender_name, body: r.body, createdAt: r.created_at });
+      })
+    .subscribe();
+  return () => { sb.removeChannel(ch); };
+}
+
+/** Rooms the signed-in user created (for a "my rooms" list). */
+export async function listMyRooms(): Promise<MyRoom[]> {
+  const { data, error } = await sb.from('rooms')
+    .select('id, creator_name, guest_name, last_active_at')
+    .order('last_active_at', { ascending: false });
+  if (error) throw error;
+  return (data || []).map((r) => ({
+    id: r.id as string, creatorName: r.creator_name as string,
+    guestName: r.guest_name as string, lastActiveAt: r.last_active_at as string,
+  }));
+}
