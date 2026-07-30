@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Message } from '../lib/parser';
-import { createRoom, joinRoom, postMessage, subscribeRoom, fetchRoomMessages, type RoomMessage, type Side } from '../lib/rooms';
+import { createRoom, joinRoom, postMessage, subscribeRoom, fetchRoomMessages, uploadRoomMedia, type RoomMessage, type Side } from '../lib/rooms';
 
 /**
  * "Continue Chat" — take an imported conversation and keep it going, live,
@@ -20,7 +20,7 @@ interface Props {
 }
 
 interface ActiveRoom { id: string; pin: string; side: Side; myName: string; otherName: string; history: Message[] }
-interface Line { name: string; text: string; time?: string; mine: boolean }
+interface Line { name: string; text: string; time?: string; mine: boolean; mediaUrl?: string | null; mediaType?: string | null; mediaName?: string | null }
 
 export default function ContinueChat({ mode, importedMessages, importedSenders, roomId: joinId, userEmail, onLogin, onHome }: Props) {
   const senders = useMemo(() => importedSenders || [], [importedSenders]);
@@ -36,7 +36,9 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
   const [live, setLive] = useState<RoomMessage[]>([]);
   const [draft, setDraft] = useState('');
   const [copied, setCopied] = useState(false);
+  const [sendingMedia, setSendingMedia] = useState(false);
   const bodyRef = useRef<HTMLDivElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (phase !== 'chat' || !room) return;
@@ -93,12 +95,21 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
     catch (e) { setErr((e as Error).message || String(e)); setDraft(body); }
   }
 
+  async function sendFile(file: File) {
+    if (!room) return;
+    setErr(''); setSendingMedia(true);
+    try {
+      const media = await uploadRoomMedia(room.id, file);
+      await postMessage(room.id, room.pin, room.side, room.myName, '', media);
+    } catch (e) { setErr((e as Error).message || String(e)); } finally { setSendingMedia(false); }
+  }
+
   const shareLink = room ? `${location.origin}/?room=${room.id}` : '';
   function copyLink() { navigator.clipboard?.writeText(`${shareLink}\nPIN: ${room?.pin}`).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1800); }); }
 
   const lines: Line[] = room ? [
     ...room.history.filter((m) => !m.system && m.sender).map((m): Line => ({ name: m.sender!, text: m.text, time: m.time, mine: m.sender === room.myName })),
-    ...live.map((m): Line => ({ name: m.senderName, text: m.body, mine: m.sender === room.side })),
+    ...live.map((m): Line => ({ name: m.senderName, text: m.body, mine: m.sender === room.side, mediaUrl: m.mediaUrl, mediaType: m.mediaType, mediaName: m.mediaName })),
   ] : [];
 
   const wrap: React.CSSProperties = { maxWidth: 520, margin: '0 auto', padding: '20px 16px' };
@@ -158,13 +169,22 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
               <div key={i} style={{ alignSelf: l.mine ? 'flex-end' : 'flex-start', maxWidth: '78%' }}>
                 <div style={{ background: l.mine ? '#d9fdd3' : '#fff', borderRadius: 10, padding: '7px 11px', boxShadow: '0 1px 1px rgba(0,0,0,.08)', fontSize: 15, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                   {!l.mine && <div style={{ fontSize: 12, fontWeight: 700, color: '#128c7e' }}>{l.name}</div>}
+                  {l.mediaUrl && l.mediaType === 'image' && <img src={l.mediaUrl} alt="" style={{ maxWidth: '100%', borderRadius: 8, display: 'block', marginBottom: l.text ? 4 : 0 }} />}
+                  {l.mediaUrl && l.mediaType === 'video' && <video src={l.mediaUrl} controls style={{ maxWidth: '100%', borderRadius: 8, display: 'block', marginBottom: l.text ? 4 : 0 }} />}
+                  {l.mediaUrl && l.mediaType === 'audio' && <audio src={l.mediaUrl} controls style={{ maxWidth: 220, display: 'block', marginBottom: l.text ? 4 : 0 }} />}
+                  {l.mediaUrl && l.mediaType === 'file' && <a href={l.mediaUrl} target="_blank" rel="noopener" style={{ color: '#128c7e', fontWeight: 600, display: 'block', marginBottom: l.text ? 4 : 0 }}>📎 {l.mediaName || 'Document'}</a>}
                   {l.text}
                 </div>
               </div>
             ))}
             {!lines.length && <div style={{ textAlign: 'center', color: '#54656f', marginTop: 30 }}>No messages yet — say hi 👋</div>}
           </div>
-          <div style={{ display: 'flex', gap: 8, padding: 10, background: '#f0f2f5' }}>
+          <div style={{ display: 'flex', gap: 8, padding: 10, background: '#f0f2f5', alignItems: 'center' }}>
+            <label title="Attach photo, video or document" style={{ fontSize: 24, cursor: sendingMedia ? 'default' : 'pointer', flexShrink: 0, opacity: sendingMedia ? 0.5 : 1, lineHeight: 1 }}>
+              {sendingMedia ? '⏳' : '📎'}
+              <input ref={fileRef} type="file" hidden accept="image/*,video/*,audio/*,application/pdf" disabled={sendingMedia}
+                onChange={(e) => { const f = e.target.files?.[0]; e.currentTarget.value = ''; if (f) sendFile(f); }} />
+            </label>
             <input style={{ ...input, borderRadius: 22, background: '#fff' }} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Type a message…"
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); send(); } }} />
             <button style={{ ...btn, borderRadius: '50%', width: 46, height: 46, padding: 0, flexShrink: 0 }} onClick={send} aria-label="Send">➤</button>
