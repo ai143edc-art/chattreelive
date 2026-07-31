@@ -18,6 +18,7 @@ export interface RoomInfo {
 }
 export interface RoomMedia { url: string; type: string; name: string; size?: number }   // type: image | video | audio | file
 export interface Reaction { by: string; emoji: string }
+export interface ReplyTo { name: string; text: string }
 export interface RoomMessage {
   id?: number;
   sender: Side;
@@ -28,6 +29,9 @@ export interface RoomMessage {
   mediaType?: string | null;
   mediaName?: string | null;
   reactions?: Reaction[];
+  replyName?: string | null;
+  replyText?: string | null;
+  deleted?: boolean;
 }
 export interface MyRoom {
   id: string;
@@ -58,7 +62,7 @@ export async function joinRoom(id: string, pin: string): Promise<RoomInfo | null
 /** Load the saved continued messages of a room (everything sent after the import). */
 export async function fetchRoomMessages(id: string): Promise<RoomMessage[]> {
   const { data, error } = await sb.from('room_messages')
-    .select('id, sender, sender_name, body, created_at, media_url, media_type, media_name, reactions')
+    .select('id, sender, sender_name, body, created_at, media_url, media_type, media_name, reactions, reply_name, reply_text, deleted')
     .eq('room_id', id).order('id', { ascending: true });
   if (error) throw error;
   return (data || []).map((r) => ({
@@ -66,6 +70,7 @@ export async function fetchRoomMessages(id: string): Promise<RoomMessage[]> {
     body: r.body as string, createdAt: r.created_at as string,
     mediaUrl: r.media_url as string | null, mediaType: r.media_type as string | null, mediaName: r.media_name as string | null,
     reactions: (r.reactions as Reaction[] | null) || [],
+    replyName: r.reply_name as string | null, replyText: r.reply_text as string | null, deleted: !!r.deleted,
   }));
 }
 
@@ -77,11 +82,20 @@ export async function reactMessage(id: string, pin: string, messageId: number, b
   if (error) throw error;
 }
 
+/** Delete your own message for everyone (leaves a "deleted" tombstone). PIN-checked. */
+export async function deleteMessage(id: string, pin: string, messageId: number, by: string): Promise<void> {
+  const { error } = await sb.rpc('delete_room_message', {
+    p_id: id, p_pin: pin, p_message_id: messageId, p_by: by,
+  });
+  if (error) throw error;
+}
+
 /** Post a message (the PIN is verified server-side; realtime then delivers it to both sides). */
-export async function postMessage(id: string, pin: string, sender: Side, senderName: string, body: string, media?: RoomMedia): Promise<void> {
+export async function postMessage(id: string, pin: string, sender: Side, senderName: string, body: string, media?: RoomMedia, reply?: ReplyTo | null): Promise<void> {
   const { error } = await sb.rpc('post_room_message', {
     p_id: id, p_pin: pin, p_sender: sender, p_sender_name: senderName, p_body: body,
     p_media_url: media?.url ?? null, p_media_type: media?.type ?? null, p_media_name: media?.name ?? null,
+    p_reply_name: reply?.name ?? null, p_reply_text: reply?.text ?? null,
   });
   if (error) throw error;
 }
@@ -100,10 +114,11 @@ export async function uploadRoomMedia(roomId: string, file: File): Promise<RoomM
   return { url, type, name: file.name, size: file.size };
 }
 
-type RowShape = { id: number; sender: Side; sender_name: string; body: string; created_at: string; media_url: string | null; media_type: string | null; media_name: string | null; reactions: Reaction[] | null };
+type RowShape = { id: number; sender: Side; sender_name: string; body: string; created_at: string; media_url: string | null; media_type: string | null; media_name: string | null; reactions: Reaction[] | null; reply_name: string | null; reply_text: string | null; deleted: boolean | null };
 const rowToMsg = (r: RowShape): RoomMessage => ({
   id: r.id, sender: r.sender, senderName: r.sender_name, body: r.body, createdAt: r.created_at,
   mediaUrl: r.media_url, mediaType: r.media_type, mediaName: r.media_name, reactions: r.reactions || [],
+  replyName: r.reply_name, replyText: r.reply_text, deleted: !!r.deleted,
 });
 
 /** Live-subscribe to a room. Fires on new messages AND on reaction changes (INSERT + UPDATE).
@@ -119,6 +134,24 @@ export function subscribeRoom(id: string, onMessage: (m: RoomMessage) => void): 
       })
     .subscribe();
   return () => { sb.removeChannel(ch); };
+}
+
+/** Live "typing…" over Realtime broadcast (no DB). Returns a throttled notifier + unsubscribe.
+ *  onTyping fires with the other person's name each time they type. */
+export function subscribeTyping(id: string, myName: string, onTyping: (name: string) => void): { notify: () => void; unsub: () => void } {
+  const ch: RealtimeChannel = sb.channel(`typing-${id}`, { config: { broadcast: { self: false } } });
+  ch.on('broadcast', { event: 'typing' }, (p) => {
+    const n = (p.payload as { name?: string })?.name;
+    if (n) onTyping(n);
+  }).subscribe();
+  let last = 0;
+  const notify = () => {
+    const now = Date.now();
+    if (now - last < 1500) return;   // don't spam the channel on every keystroke
+    last = now;
+    ch.send({ type: 'broadcast', event: 'typing', payload: { name: myName } });
+  };
+  return { notify, unsub: () => { sb.removeChannel(ch); } };
 }
 
 /** Rooms the signed-in user created (for a "my rooms" list). */
