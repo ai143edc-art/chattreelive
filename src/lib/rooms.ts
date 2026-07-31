@@ -197,3 +197,25 @@ export function rememberRoom(r: Omit<StoredRoom, 'at'>): void {
 export function forgetRoom(id: string): void {
   try { localStorage.setItem(LS_KEY, JSON.stringify(recentRooms().filter((x) => x.id !== id))); } catch { /* ignore */ }
 }
+
+// per-room label + custom title, device-local (works for guests too, no DB needed)
+export interface RoomMeta { title?: string; tag?: string }
+const META_KEY = 'chattree_live_meta';
+export function allRoomMeta(): Record<string, RoomMeta> {
+  try { return JSON.parse(localStorage.getItem(META_KEY) || '{}') as Record<string, RoomMeta>; } catch { return {}; }
+}
+export function setRoomMeta(id: string, patch: RoomMeta): void {
+  try {
+    const all = allRoomMeta();
+    all[id] = { ...all[id], ...patch };
+    localStorage.setItem(META_KEY, JSON.stringify(all));
+  } catch { /* ignore */ }
+}
+
+/** Permanently delete a room + all its messages (both sides). Only the logged-in
+ *  creator can — returns true if it was actually deleted on the server. */
+export async function deleteRoom(id: string): Promise<boolean> {
+  const { data, error } = await sb.rpc('delete_room', { p_id: id });
+  if (error) throw error;
+  return !!data;
+}
