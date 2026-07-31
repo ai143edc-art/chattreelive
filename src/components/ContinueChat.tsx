@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Message } from '../lib/parser';
 import {
   createRoom, joinRoom, postMessage, subscribeRoom, fetchRoomMessages, uploadRoomMedia,
-  reactMessage, deleteMessage, subscribeTyping, roomSync,
+  reactMessage, deleteMessage, subscribeTyping, roomSync, rememberRoom,
   type RoomMessage, type Reaction, type ReplyTo, type Side,
 } from '../lib/rooms';
 
@@ -18,6 +18,7 @@ interface Props {
   importedMessages?: Message[];
   importedSenders?: string[];
   roomId?: string;
+  autoPin?: string;            // when reopening from a saved room: skip the PIN prompt
   userEmail: string | null;
   onLogin: () => void;
   onHome: () => void;
@@ -62,7 +63,7 @@ function fmtLastSeen(iso: string): string {
   return `${d.toLocaleDateString([], { day: '2-digit', month: 'short' })} at ${t}`;
 }
 
-export default function ContinueChat({ mode, importedMessages, importedSenders, roomId: joinId, userEmail, onLogin, onHome }: Props) {
+export default function ContinueChat({ mode, importedMessages, importedSenders, roomId: joinId, autoPin, userEmail, onLogin, onHome }: Props) {
   const senders = useMemo(() => importedSenders || [], [importedSenders]);
   const [phase, setPhase] = useState<'setup' | 'join' | 'chat'>(mode === 'create' ? 'setup' : 'join');
   const [room, setRoom] = useState<ActiveRoom | null>(null);
@@ -156,28 +157,34 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
     try {
       const id = await createRoom(pin.trim(), myName, otherName, importedMessages || []);
       setRoom({ id, pin: pin.trim(), side: 'creator', myName, otherName, history: importedMessages || [] });
+      rememberRoom({ id, pin: pin.trim(), myName, otherName, isCreator: true });
       setPhase('chat');
     } catch (e) { setErr((e as Error).message || String(e)); } finally { setBusy(false); }
   }
 
-  async function doJoin() {
+  async function doJoin(pinArg?: string) {
     setErr('');
     if (!joinId) return;
-    if (joinPin.trim().length < 4) { setErr('Enter the PIN.'); return; }
+    const usePin = (pinArg ?? joinPin).trim();
+    if (usePin.length < 4) { setErr('Enter the PIN.'); return; }
     setBusy(true);
     try {
-      const info = await joinRoom(joinId, joinPin.trim());
+      const info = await joinRoom(joinId, usePin);
       if (!info) { setErr('Wrong PIN, or this chat no longer exists.'); return; }
       const side: Side = info.isCreator ? 'creator' : 'guest';
-      setRoom({
-        id: joinId, pin: joinPin.trim(), side,
-        myName: info.isCreator ? info.creatorName : info.guestName,
-        otherName: info.isCreator ? info.guestName : info.creatorName,
-        history: info.history,
-      });
+      const myNm = info.isCreator ? info.creatorName : info.guestName;
+      const otherNm = info.isCreator ? info.guestName : info.creatorName;
+      setRoom({ id: joinId, pin: usePin, side, myName: myNm, otherName: otherNm, history: info.history });
+      rememberRoom({ id: joinId, pin: usePin, myName: myNm, otherName: otherNm, isCreator: info.isCreator });
       setPhase('chat');
     } catch (e) { setErr((e as Error).message || String(e)); } finally { setBusy(false); }
   }
+
+  // reopening from a saved room → auto-join with the stored PIN, no prompt
+  useEffect(() => {
+    if (mode === 'join' && autoPin && phase === 'join' && !room) doJoin(autoPin);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function send() {
     if (!room || !draft.trim()) return;
@@ -305,7 +312,7 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
           <p style={{ color: '#54656f', marginTop: 0 }}>Enter the PIN the other person shared with you.</p>
           <input style={{ ...input, margin: '10px 0 16px', letterSpacing: 3, textAlign: 'center', fontSize: 20 }} value={joinPin} onChange={(e) => setJoinPin(e.target.value)} placeholder="PIN" inputMode="numeric"
             onKeyDown={(e) => { if (e.key === 'Enter') doJoin(); }} />
-          <button style={{ ...btn, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={doJoin}>{busy ? 'Joining…' : 'Join chat'}</button>
+          <button style={{ ...btn, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={() => doJoin()}>{busy ? 'Joining…' : 'Join chat'}</button>
           {err && <div style={{ color: '#d3396d', marginTop: 12 }}>{err}</div>}
         </div>
       )}

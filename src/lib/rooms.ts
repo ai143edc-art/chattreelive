@@ -166,7 +166,7 @@ export function subscribeTyping(id: string, myName: string, onTyping: (name: str
   return { notify, unsub: () => { sb.removeChannel(ch); } };
 }
 
-/** Rooms the signed-in user created (for a "my rooms" list). */
+/** Rooms the signed-in user created (recoverable from any device once logged in). */
 export async function listMyRooms(): Promise<MyRoom[]> {
   const { data, error } = await sb.from('rooms')
     .select('id, creator_name, guest_name, last_active_at')
@@ -176,4 +176,24 @@ export async function listMyRooms(): Promise<MyRoom[]> {
     id: r.id as string, creatorName: r.creator_name as string,
     guestName: r.guest_name as string, lastActiveAt: r.last_active_at as string,
   }));
+}
+
+// --- device-local room memory (so you can return even without logging in, and
+// so guests — who have no account — can reopen from the same phone/browser). ---
+export interface StoredRoom { id: string; pin: string; myName: string; otherName: string; isCreator: boolean; at: number }
+const LS_KEY = 'chattree_live_rooms';
+
+export function recentRooms(): StoredRoom[] {
+  try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]') as StoredRoom[]; } catch { return []; }
+}
+/** Save (or refresh) a room on this device so it shows in "recent" and can be reopened. */
+export function rememberRoom(r: Omit<StoredRoom, 'at'>): void {
+  try {
+    const list = recentRooms().filter((x) => x.id !== r.id);
+    list.unshift({ ...r, at: Date.now() });
+    localStorage.setItem(LS_KEY, JSON.stringify(list.slice(0, 25)));
+  } catch { /* localStorage unavailable — non-fatal */ }
+}
+export function forgetRoom(id: string): void {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(recentRooms().filter((x) => x.id !== id))); } catch { /* ignore */ }
 }
