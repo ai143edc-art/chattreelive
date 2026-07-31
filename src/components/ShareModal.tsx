@@ -3,6 +3,7 @@ import * as P from '../lib/parser';
 import { shareChat } from '../lib/supabase';
 import { useLang } from '../lib/i18n';
 import type { TKey } from '../lib/i18n';
+import { promptDialog } from '../lib/dialog';
 import { useModal, dialogProps } from '../lib/useModal';
 
 interface Props {
@@ -72,7 +73,7 @@ export default function ShareModal({ open, chatId, title, avatar, onClose, toast
   async function copy() {
     if (!url) return;
     try { await navigator.clipboard.writeText(url); toast(t('shareCopied'), 2200); }
-    catch { prompt(t('hSharePrompt'), url); }
+    catch { promptDialog({ message: t('hSharePrompt'), defaultValue: url }); }
   }
 
   async function download() {

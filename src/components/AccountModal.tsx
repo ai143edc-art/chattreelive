@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { changePassword, deleteAccount, signOut } from '../lib/supabase';
 import { useLang } from '../lib/i18n';
+import { confirmDialog } from '../lib/dialog';
 import { useModal, dialogProps } from '../lib/useModal';
 
 interface Props {
@@ -27,8 +28,8 @@ export default function AccountModal({ open, onClose, email, toast }: Props) {
   }
   async function doLogout() { await signOut(); onClose(); toast(t('acLoggedOut'), 1600); }
   async function doDelete() {
-    if (!confirm(t('acDeleteConfirm1'))) return;
-    if (!confirm(t('acDeleteConfirm2'))) return;
+    if (!(await confirmDialog({ title: t('acDelete'), message: t('acDeleteConfirm1'), confirmLabel: t('dlgDelete'), danger: true }))) return;
+    if (!(await confirmDialog({ title: t('acDelete'), message: t('acDeleteConfirm2'), confirmLabel: t('dlgDelete'), danger: true }))) return;
     setErr(''); setBusy(true);
     try { await deleteAccount(); onClose(); toast(t('acDeleted'), 2500); }
     catch (e) { setErr((e as Error).message || String(e)); setBusy(false); }

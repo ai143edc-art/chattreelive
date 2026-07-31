@@ -3,6 +3,7 @@ import { listChats, getChat, renameChat, deleteChat, updateCategory } from '../l
 import type { ChatRow } from '../lib/supabase';
 import { CATEGORY_PRESETS, catEmoji } from '../lib/categories';
 import { useLang } from '../lib/i18n';
+import { confirmDialog, promptDialog } from '../lib/dialog';
 import ShareModal from './ShareModal';
 import { useModal, dialogProps } from '../lib/useModal';
 
@@ -40,7 +41,7 @@ export default function HistoryModal({ open, onClose, onOpenChat, toast }: Props
     finally { setOpeningId(''); }
   }
   async function doRename(id: string, cur: string) {
-    const name = prompt(t('hRenamePrompt'), cur || ''); if (name == null) return;
+    const name = await promptDialog({ message: t('hRenamePrompt'), defaultValue: cur || '', confirmLabel: t('dlgSave') }); if (name == null) return;
     const nm = name.trim(); if (!nm) return;
     try { await renameChat(id, nm); toast(t('hRenamed'), 1800); refresh(); }
     catch (e) { toast('❌ ' + ((e as Error).message || e), 3000); }
@@ -49,12 +50,12 @@ export default function HistoryModal({ open, onClose, onOpenChat, toast }: Props
     setShare({ id: r.id, title: r.contact_title || r.title || 'Chat', avatar: r.avatar });
   }
   async function doDelete(id: string, title: string) {
-    if (!confirm(t('hDeleteConfirm').replace('{x}', title))) return;
+    if (!(await confirmDialog({ message: t('hDeleteConfirm').replace('{x}', title), confirmLabel: t('dlgDelete'), danger: true }))) return;
     try { await deleteChat(id); toast(t('hDeleted'), 1800); refresh(); }
     catch (e) { toast('❌ ' + ((e as Error).message || e), 3000); }
   }
   async function doCategory(id: string, cur: string) {
-    const c = prompt(t('hCatPrompt').replace('{x}', CATEGORY_PRESETS.join(', ')), cur || '');
+    const c = await promptDialog({ message: t('hCatPrompt').replace('{x}', CATEGORY_PRESETS.join(', ')), defaultValue: cur || '', confirmLabel: t('dlgSave') });
     if (c === null) return;
     const cc = c.trim();
     try { await updateCategory(id, cc || null); toast(t('hCatUpdated'), 1600); refresh(); }

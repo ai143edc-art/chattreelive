@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { useLang } from '../lib/i18n';
+import { alertDialog } from '../lib/dialog';
 import LangToggle from './LangToggle';
 
 export interface LoadedChat {
@@ -61,7 +62,7 @@ export default function Uploader({ onLoaded, onContinue, onMyRooms, onHistory, o
               if (media.length > 3) setBusy(`${t('busyExtract')} ${done} / ${media.length}…`);
             }
           } catch (err) {
-            alert(t('errZip'));
+            alertDialog({ message: t('errZip') });
             console.error(err);
           }
         } else if (lower.endsWith('.txt')) {
@@ -71,7 +72,7 @@ export default function Uploader({ onLoaded, onContinue, onMyRooms, onHistory, o
         }
       }
       if (!chatText) {
-        alert(t('errNoTxt'));
+        alertDialog({ message: t('errNoTxt') });
         return;
       }
       setBusy(t('busyBuilding'));

@@ -266,6 +266,20 @@ body::before{
 .hist-box{background:#fff;border-radius:14px;max-width:520px;width:100%;padding:22px;position:relative;box-shadow:0 12px 40px rgba(0,0,0,.4);}
 .hist-box h3{margin:0 0 14px;color:var(--wa-green-dark);}
 .hist-box .x{position:absolute;top:10px;right:16px;font-size:28px;color:#888;cursor:pointer;line-height:1;}
+/* app-styled confirm/alert/prompt (see lib/dialog.tsx) */
+.dlg-overlay{align-items:center;z-index:400;}
+.dlg-box{max-width:400px;padding:24px 22px 20px;animation:dlgPop .16s ease-out;}
+@keyframes dlgPop{from{transform:scale(.94);opacity:0;}to{transform:scale(1);opacity:1;}}
+.dlg-box h3{margin:0 0 12px;}
+.dlg-msg{color:#3b4a54;font-size:15px;line-height:1.55;margin:0 0 20px;white-space:pre-wrap;}
+.dlg-input{width:100%;padding:11px 12px;border:2px solid #d7ded9;border-radius:10px;font-size:15px;box-sizing:border-box;margin:-6px 0 20px;}
+.dlg-input:focus{outline:none;border-color:var(--wa-teal);}
+.dlg-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;}
+.dlg-btn{padding:10px 20px;border-radius:22px;font-weight:700;font-size:14.5px;cursor:pointer;border:none;transition:filter .15s;}
+.dlg-btn:hover{filter:brightness(.95);}
+.dlg-cancel{background:#eceff1;color:#3a4a44;}
+.dlg-ok{background:var(--wa-green);color:#fff;}
+.dlg-ok.danger{background:#e5484d;}
 .hist-sub{color:#555;font-size:14px;margin:0 0 10px;}
 .hist-pass{width:100%;padding:11px 12px;border:2px solid #ccc;border-radius:8px;font-size:15px;box-sizing:border-box;}
 .hist-open{background:var(--wa-green)!important;color:#fff!important;border:none!important;width:100%;margin-top:10px;padding:11px!important;}

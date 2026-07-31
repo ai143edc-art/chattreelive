@@ -72,6 +72,10 @@ const DICT = {
     busyReading: 'Reading files…', busyZip: 'Opening ZIP…', busyBuilding: 'Building chat…', busyExtract: 'Extracting media',
     errNoTxt: "No chat .txt file found. Please upload the WhatsApp export ZIP or the '_chat.txt' file.",
     errZip: "Couldn't open the ZIP. Is the internet on? Or upload the files individually.",
+    dlgOk: 'OK',
+    dlgCancel: 'Cancel',
+    dlgDelete: 'Delete',
+    dlgSave: 'Save',
     // ---- Toolbar ----
     tbLogin: '🔐 Log in', tbSettings: '⚙️ Settings', tbEdit: '✏️ Edit:', tbHome: 'Home',
     tbEditHint: 'Click messages to edit them', tbYou: 'You are (right side)', tbYourName: 'Your name',
@@ -239,6 +243,10 @@ const DICT = {
     busyReading: 'फ़ाइलें पढ़ रहे हैं…', busyZip: 'ZIP खोल रहे हैं…', busyBuilding: 'चैट बना रहे हैं…', busyExtract: 'मीडिया निकाल रहे हैं',
     errNoTxt: "कोई चैट .txt फ़ाइल नहीं मिली। कृपया WhatsApp एक्सपोर्ट ZIP या '_chat.txt' फ़ाइल अपलोड करें।",
     errZip: 'ZIP नहीं खुल पाई। इंटरनेट चालू है? या फ़ाइलें अलग-अलग अपलोड करें।',
+    dlgOk: 'ठीक है',
+    dlgCancel: 'रद्द करें',
+    dlgDelete: 'हटाएं',
+    dlgSave: 'सेव करें',
     // ---- Toolbar ----
     tbLogin: '🔐 लॉग इन', tbSettings: '⚙️ सेटिंग्स', tbEdit: '✏️ एडिट:', tbHome: 'होम',
     tbEditHint: 'एडिट करने के लिए मैसेज पर क्लिक करें', tbYou: 'आप हैं (दाईं ओर)', tbYourName: 'आपका नाम',

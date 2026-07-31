@@ -4,6 +4,7 @@ import type { PhoneModel } from '../lib/models';
 import { fileToAvatar, fileToDataUrl } from '../lib/image';
 import MiniSelect from './MiniSelect';
 import { useLang } from '../lib/i18n';
+import { alertDialog } from '../lib/dialog';
 import LangToggle from './LangToggle';
 
 interface Props {
@@ -42,14 +43,14 @@ export default function Toolbar(p: Props) {
     e.target.value = '';
     if (!f) return;
     try { p.onAvatar(await fileToAvatar(f)); }
-    catch (err) { alert((err as Error).message); }
+    catch (err) { alertDialog({ message: (err as Error).message }); }
   }
   async function pickWallpaper(e: ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     e.target.value = '';
     if (!f) return;
     try { p.onWallpaper(`center/cover no-repeat url("${await fileToDataUrl(f)}")`); }
-    catch (err) { alert((err as Error).message); }
+    catch (err) { alertDialog({ message: (err as Error).message }); }
   }
   return (
     <div className="toolbar">

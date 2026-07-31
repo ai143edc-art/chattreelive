@@ -3,6 +3,7 @@ import {
   recentRooms, forgetRoom, listMyRooms, deleteRoom, allRoomMeta, setRoomMeta,
   type StoredRoom, type MyRoom, type RoomMeta,
 } from '../lib/rooms';
+import { confirmDialog, alertDialog } from '../lib/dialog';
 
 /**
  * "My continue-chats" — recover a live room even if the share link is lost, and
@@ -62,11 +63,11 @@ export default function MyRooms({ userEmail, onOpen, onBack, onLogin }: Props) {
   function saveRename(id: string) { updateMeta(id, { title: editVal.trim() || undefined }); setEditing(null); }
   async function del(id: string, owned: boolean) {
     const msg = owned
-      ? 'Ye chat dono ke liye HAMESHA ke liye delete ho jayegi (saari messages bhi). Wapas nahi aayegi. Pakka?'
-      : 'Ye chat sirf is device se hatt jayegi (doosre ke paas rahegi). Pakka?';
-    if (!window.confirm(msg)) return;
+      ? 'This chat will be permanently deleted for BOTH people (all messages too). This cannot be undone.'
+      : 'This chat will be removed from this device (the other person keeps it).';
+    if (!(await confirmDialog({ title: owned ? 'Delete chat' : 'Remove from device', message: msg, confirmLabel: owned ? 'Delete' : 'Remove', danger: owned }))) return;
     try { if (owned) await deleteRoom(id); }
-    catch (e) { window.alert(`Delete nahi ho paya: ${(e as Error).message}`); return; }
+    catch (e) { alertDialog({ title: 'Error', message: `Couldn't delete: ${(e as Error).message}` }); return; }
     forgetRoom(id); setRecent(recentRooms());
     setMine((m) => m.filter((x) => x.id !== id));
   }
