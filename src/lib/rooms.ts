@@ -90,6 +90,18 @@ export async function deleteMessage(id: string, pin: string, messageId: number, 
   if (error) throw error;
 }
 
+export interface RoomSync { otherSeenAt: string | null; otherReadUpto: number }
+/** Heartbeat: stamp my "seen now" + how far I've read, and get back the other
+ *  side's last-seen time + read mark (powers online/last-seen + blue ticks). */
+export async function roomSync(id: string, pin: string, side: Side, readUpto: number): Promise<RoomSync> {
+  const { data, error } = await sb.rpc('room_sync', {
+    p_id: id, p_pin: pin, p_side: side, p_read_upto: readUpto,
+  });
+  if (error) throw error;
+  const row = ((data || []) as { other_seen_at: string | null; other_read_upto: number }[])[0];
+  return { otherSeenAt: row?.other_seen_at ?? null, otherReadUpto: Number(row?.other_read_upto ?? 0) };
+}
+
 /** Post a message (the PIN is verified server-side; realtime then delivers it to both sides). */
 export async function postMessage(id: string, pin: string, sender: Side, senderName: string, body: string, media?: RoomMedia, reply?: ReplyTo | null): Promise<void> {
   const { error } = await sb.rpc('post_room_message', {

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Message } from '../lib/parser';
 import {
   createRoom, joinRoom, postMessage, subscribeRoom, fetchRoomMessages, uploadRoomMedia,
-  reactMessage, deleteMessage, subscribeTyping,
+  reactMessage, deleteMessage, subscribeTyping, roomSync,
   type RoomMessage, type Reaction, type ReplyTo, type Side,
 } from '../lib/rooms';
 
@@ -52,6 +52,15 @@ function previewOf(l: Line): string {
   if (l.mediaType === 'file') return `📄 ${l.mediaName || 'Document'}`;
   return l.text.length > 60 ? `${l.text.slice(0, 60)}…` : l.text;
 }
+function fmtLastSeen(iso: string): string {
+  const d = new Date(iso); const now = new Date();
+  if ((now.getTime() - d.getTime()) / 1000 < 60) return 'just now';
+  const t = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  if (d.toDateString() === now.toDateString()) return `today at ${t}`;
+  const y = new Date(now); y.setDate(now.getDate() - 1);
+  if (d.toDateString() === y.toDateString()) return `yesterday at ${t}`;
+  return `${d.toLocaleDateString([], { day: '2-digit', month: 'short' })} at ${t}`;
+}
 
 export default function ContinueChat({ mode, importedMessages, importedSenders, roomId: joinId, userEmail, onLogin, onHome }: Props) {
   const senders = useMemo(() => importedSenders || [], [importedSenders]);
@@ -73,10 +82,14 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
   const [otherTyping, setOtherTyping] = useState<string | null>(null);
   const [recording, setRecording] = useState(false);
   const [recSecs, setRecSecs] = useState(0);
+  const [otherSeenAt, setOtherSeenAt] = useState<string | null>(null);
+  const [otherReadUpto, setOtherReadUpto] = useState(0);
 
   const bodyRef = useRef<HTMLDivElement>(null);
   const typingApi = useRef<{ notify: () => void; unsub: () => void } | null>(null);
   const typingClear = useRef<number | undefined>(undefined);
+  const maxReadRef = useRef(0);              // highest message id I've seen
+  const syncRef = useRef<() => void>(() => {});
   const recRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const cancelRef = useRef(false);
@@ -102,10 +115,37 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
     });
     typingApi.current = tp;
 
-    return () => { alive = false; unsub(); tp.unsub(); typingApi.current = null; window.clearTimeout(typingClear.current); };
+    // heartbeat: report my "seen now" + read mark, learn the other's → online/last-seen + blue ticks
+    const sync = () => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+      roomSync(room.id, room.pin, room.side, maxReadRef.current)
+        .then((s) => { if (alive) { setOtherSeenAt(s.otherSeenAt); setOtherReadUpto(s.otherReadUpto); } })
+        .catch(() => {});
+    };
+    syncRef.current = sync;
+    sync();
+    const hb = window.setInterval(sync, 10000);
+    const onVis = () => { if (document.visibilityState === 'visible') sync(); };
+    document.addEventListener('visibilitychange', onVis);
+
+    return () => {
+      alive = false; unsub(); tp.unsub(); typingApi.current = null;
+      window.clearTimeout(typingClear.current); window.clearInterval(hb);
+      document.removeEventListener('visibilitychange', onVis);
+    };
   }, [phase, room]);
 
   useEffect(() => { if (bodyRef.current) bodyRef.current.scrollTop = bodyRef.current.scrollHeight; }, [live, phase, otherTyping]);
+
+  // when new messages arrive and I'm looking, advance my read mark + report it (drives the other's blue ticks)
+  useEffect(() => {
+    if (phase !== 'chat') return;
+    const maxId = live.reduce((m, x) => Math.max(m, x.id || 0), 0);
+    if (maxId > maxReadRef.current && (typeof document === 'undefined' || document.visibilityState === 'visible')) {
+      maxReadRef.current = maxId;
+      syncRef.current();
+    }
+  }, [live, phase]);
 
   async function doCreate() {
     setErr('');
@@ -219,6 +259,8 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
 
   const keyOf = (l: Line, i: number) => (l.id != null ? `m${l.id}` : `h${i}`);
   const mmss = `${Math.floor(recSecs / 60)}:${String(recSecs % 60).padStart(2, '0')}`;
+  const otherOnline = !!otherSeenAt && Date.now() - new Date(otherSeenAt).getTime() < 35000;
+  const statusText = otherTyping ? 'typing…' : otherOnline ? 'online' : otherSeenAt ? `last seen ${fmtLastSeen(otherSeenAt)}` : '';
 
   const wrap: React.CSSProperties = { maxWidth: 520, margin: '0 auto', padding: '20px 16px' };
   const input: React.CSSProperties = { width: '100%', padding: '12px 14px', border: '1px solid #d7ded9', borderRadius: 10, fontSize: 16, boxSizing: 'border-box' };
@@ -229,7 +271,12 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
     <div style={{ minHeight: '100vh', background: '#eae6df' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 18px', background: '#fff', borderBottom: '1px solid #e6ebe9' }}>
         <span style={{ fontWeight: 800, color: '#128c7e', cursor: 'pointer' }} onClick={onHome}>💬 Chat Tree</span>
-        <span style={{ fontSize: 13, color: '#54656f' }}>{phase === 'chat' && room ? (otherTyping ? `${otherTyping} is typing…` : `with ${room.otherName}`) : 'Continue chat · live'}</span>
+        {phase === 'chat' && room ? (
+          <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1.15 }}>
+            <b style={{ fontSize: 14, color: '#111b21' }}>{room.otherName}</b>
+            {statusText && <span style={{ fontSize: 12, color: otherOnline || otherTyping ? '#25904f' : '#54656f' }}>{statusText}</span>}
+          </span>
+        ) : <span style={{ fontSize: 13, color: '#54656f' }}>Continue chat · live</span>}
       </header>
 
       {phase === 'setup' && (
@@ -310,7 +357,14 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
                         {l.text}
                       </>
                     )}
-                    {l.time && <span style={{ fontSize: 10.5, color: '#8696a0', float: 'right', marginLeft: 8, position: 'relative', top: 3 }}>{l.time}</span>}
+                    {l.time && (
+                      <span style={{ float: 'right', marginLeft: 8, position: 'relative', top: 3, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                        <span style={{ fontSize: 10.5, color: '#8696a0' }}>{l.time}</span>
+                        {l.mine && l.id != null && !l.deleted && (
+                          <span style={{ fontSize: 11.5, fontWeight: 700, color: otherReadUpto >= l.id ? '#53bdeb' : '#8696a0' }}>✓✓</span>
+                        )}
+                      </span>
+                    )}
                   </div>
 
                   {rx.length > 0 && (
