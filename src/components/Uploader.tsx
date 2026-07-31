@@ -119,7 +119,7 @@ export default function Uploader({ onLoaded, onContinue, onHistory, onBlank, onH
             <span className="up-cd">{t('upUploadDesc')} <b>.zip</b> / <b>_chat.txt</b> {t('upWithMedia')}</span>
             <input
               ref={inputRef} type="file" multiple hidden
-              accept=".zip,.txt,image/*,video/*,audio/*,.opus,.vcf,.pdf,.doc,.docx"
+              accept=".zip,.txt,image/*,video/*,audio/*,.opus,.vcf,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
               onClick={(e) => e.stopPropagation()}
               onChange={(e) => handleFiles([...(e.target.files || [])])}
             />

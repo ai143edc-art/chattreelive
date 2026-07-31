@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Message } from '../lib/parser';
-import { createRoom, joinRoom, postMessage, subscribeRoom, fetchRoomMessages, uploadRoomMedia, type RoomMessage, type Side } from '../lib/rooms';
+import { createRoom, joinRoom, postMessage, subscribeRoom, fetchRoomMessages, uploadRoomMedia, reactMessage, type RoomMessage, type Reaction, type Side } from '../lib/rooms';
 
 /**
  * "Continue Chat" — take an imported conversation and keep it going, live,
@@ -20,7 +20,23 @@ interface Props {
 }
 
 interface ActiveRoom { id: string; pin: string; side: Side; myName: string; otherName: string; history: Message[] }
-interface Line { name: string; text: string; time?: string; mine: boolean; mediaUrl?: string | null; mediaType?: string | null; mediaName?: string | null }
+interface Line { id?: number; name: string; text: string; time?: string; mine: boolean; mediaUrl?: string | null; mediaType?: string | null; mediaName?: string | null; reactions?: Reaction[] }
+
+// WhatsApp's reaction set.
+const EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+
+function fmtTime(iso?: string): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+function aggReactions(rs?: Reaction[]): { emoji: string; count: number }[] {
+  if (!rs || !rs.length) return [];
+  const map = new Map<string, number>();
+  for (const r of rs) map.set(r.emoji, (map.get(r.emoji) || 0) + 1);
+  return [...map.entries()].map(([emoji, count]) => ({ emoji, count }));
+}
 
 export default function ContinueChat({ mode, importedMessages, importedSenders, roomId: joinId, userEmail, onLogin, onHome }: Props) {
   const senders = useMemo(() => importedSenders || [], [importedSenders]);
@@ -37,16 +53,20 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
   const [draft, setDraft] = useState('');
   const [copied, setCopied] = useState(false);
   const [sendingMedia, setSendingMedia] = useState(false);
+  const [reactingTo, setReactingTo] = useState<number | null>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (phase !== 'chat' || !room) return;
     let alive = true;
-    // merge keeps the list de-duped (by id) and in order — so the saved history
-    // loaded on (re)join and the live realtime inserts never double up.
-    const merge = (prev: RoomMessage[], m: RoomMessage) =>
-      prev.some((x) => x.id === m.id) ? prev : [...prev, m].sort((a, b) => (a.id || 0) - (b.id || 0));
+    // merge upserts by id — new inserts append, reaction UPDATEs replace in place;
+    // so saved history, live inserts and reaction changes never double up or go stale.
+    const merge = (prev: RoomMessage[], m: RoomMessage) => {
+      const i = prev.findIndex((x) => x.id === m.id);
+      if (i === -1) return [...prev, m].sort((a, b) => (a.id || 0) - (b.id || 0));
+      const copy = prev.slice(); copy[i] = m; return copy;
+    };
     const unsub = subscribeRoom(room.id, (m) => setLive((prev) => merge(prev, m)));
     // load everything sent before now, so re-entering a room resumes the full chat
     fetchRoomMessages(room.id).then((past) => { if (alive) setLive((prev) => past.reduce(merge, prev)); }).catch(() => {});
@@ -104,12 +124,19 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
     } catch (e) { setErr((e as Error).message || String(e)); } finally { setSendingMedia(false); }
   }
 
+  async function react(messageId: number, emoji: string) {
+    if (!room) return;
+    setReactingTo(null);
+    try { await reactMessage(room.id, room.pin, messageId, room.myName, emoji); }
+    catch (e) { setErr((e as Error).message || String(e)); }
+  }
+
   const shareLink = room ? `${location.origin}/?room=${room.id}` : '';
   function copyLink() { navigator.clipboard?.writeText(`${shareLink}\nPIN: ${room?.pin}`).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1800); }); }
 
   const lines: Line[] = room ? [
     ...room.history.filter((m) => !m.system && m.sender).map((m): Line => ({ name: m.sender!, text: m.text, time: m.time, mine: m.sender === room.myName })),
-    ...live.map((m): Line => ({ name: m.senderName, text: m.body, mine: m.sender === room.side, mediaUrl: m.mediaUrl, mediaType: m.mediaType, mediaName: m.mediaName })),
+    ...live.map((m): Line => ({ id: m.id, name: m.senderName, text: m.body, time: fmtTime(m.createdAt), mine: m.sender === room.side, mediaUrl: m.mediaUrl, mediaType: m.mediaType, mediaName: m.mediaName, reactions: m.reactions })),
   ] : [];
 
   const wrap: React.CSSProperties = { maxWidth: 520, margin: '0 auto', padding: '20px 16px' };
@@ -164,25 +191,52 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
               <button style={{ ...btn, padding: '5px 12px', fontSize: 13, borderRadius: 16 }} onClick={copyLink}>{copied ? 'Copied ✓' : 'Copy'}</button>
             </div>
           )}
-          <div ref={bodyRef} style={{ flex: 1, overflowY: 'auto', padding: '14px 12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {lines.map((l, i) => (
-              <div key={i} style={{ alignSelf: l.mine ? 'flex-end' : 'flex-start', maxWidth: '78%' }}>
-                <div style={{ background: l.mine ? '#d9fdd3' : '#fff', borderRadius: 10, padding: '7px 11px', boxShadow: '0 1px 1px rgba(0,0,0,.08)', fontSize: 15, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                  {!l.mine && <div style={{ fontSize: 12, fontWeight: 700, color: '#128c7e' }}>{l.name}</div>}
-                  {l.mediaUrl && l.mediaType === 'image' && <img src={l.mediaUrl} alt="" style={{ maxWidth: '100%', borderRadius: 8, display: 'block', marginBottom: l.text ? 4 : 0 }} />}
-                  {l.mediaUrl && l.mediaType === 'video' && <video src={l.mediaUrl} controls style={{ maxWidth: '100%', borderRadius: 8, display: 'block', marginBottom: l.text ? 4 : 0 }} />}
-                  {l.mediaUrl && l.mediaType === 'audio' && <audio src={l.mediaUrl} controls style={{ maxWidth: 220, display: 'block', marginBottom: l.text ? 4 : 0 }} />}
-                  {l.mediaUrl && l.mediaType === 'file' && <a href={l.mediaUrl} target="_blank" rel="noopener" style={{ color: '#128c7e', fontWeight: 600, display: 'block', marginBottom: l.text ? 4 : 0 }}>📎 {l.mediaName || 'Document'}</a>}
-                  {l.text}
+          <div ref={bodyRef} onClick={() => setReactingTo(null)} style={{ flex: 1, overflowY: 'auto', padding: '14px 12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {lines.map((l, i) => {
+              const rx = aggReactions(l.reactions);
+              const canReact = typeof l.id === 'number';
+              return (
+                <div key={l.id ?? `h${i}`} style={{ alignSelf: l.mine ? 'flex-end' : 'flex-start', maxWidth: '78%', position: 'relative', marginBottom: rx.length ? 12 : 0 }}>
+                  <div
+                    onClick={(e) => { e.stopPropagation(); if (canReact) setReactingTo(reactingTo === l.id ? null : l.id!); }}
+                    style={{ background: l.mine ? '#d9fdd3' : '#fff', borderRadius: 10, padding: '7px 11px', boxShadow: '0 1px 1px rgba(0,0,0,.08)', fontSize: 15, whiteSpace: 'pre-wrap', wordBreak: 'break-word', cursor: canReact ? 'pointer' : 'default' }}
+                  >
+                    {!l.mine && <div style={{ fontSize: 12, fontWeight: 700, color: '#128c7e' }}>{l.name}</div>}
+                    {l.mediaUrl && l.mediaType === 'image' && <img src={l.mediaUrl} alt="" style={{ maxWidth: '100%', borderRadius: 8, display: 'block', marginBottom: l.text ? 4 : 0 }} />}
+                    {l.mediaUrl && l.mediaType === 'video' && <video src={l.mediaUrl} controls style={{ maxWidth: '100%', borderRadius: 8, display: 'block', marginBottom: l.text ? 4 : 0 }} />}
+                    {l.mediaUrl && l.mediaType === 'audio' && <audio src={l.mediaUrl} controls style={{ maxWidth: 220, display: 'block', marginBottom: l.text ? 4 : 0 }} />}
+                    {l.mediaUrl && l.mediaType === 'file' && (
+                      <a href={l.mediaUrl} target="_blank" rel="noopener" onClick={(e) => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#0a6b5b', fontWeight: 600, textDecoration: 'none', background: '#f5f6f6', borderRadius: 8, padding: '8px 10px', marginBottom: l.text ? 4 : 0 }}>
+                        <span style={{ fontSize: 22 }}>📄</span>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 200 }}>{l.mediaName || 'Document'}</span>
+                      </a>
+                    )}
+                    {l.text}
+                    {l.time && <span style={{ fontSize: 10.5, color: '#8696a0', float: 'right', marginLeft: 8, marginTop: 3, position: 'relative', top: 3 }}>{l.time}</span>}
+                  </div>
+
+                  {rx.length > 0 && (
+                    <div style={{ position: 'absolute', bottom: -11, left: l.mine ? 'auto' : 8, right: l.mine ? 8 : 'auto', display: 'flex', gap: 2, background: '#fff', border: '1px solid #eceff1', borderRadius: 12, padding: '1px 6px', boxShadow: '0 1px 2px rgba(0,0,0,.14)', fontSize: 12.5, lineHeight: 1.5 }}>
+                      {rx.map((r) => <span key={r.emoji}>{r.emoji}{r.count > 1 ? ` ${r.count}` : ''}</span>)}
+                    </div>
+                  )}
+
+                  {reactingTo === l.id && canReact && (
+                    <div style={{ position: 'absolute', top: -42, left: l.mine ? 'auto' : 0, right: l.mine ? 0 : 'auto', display: 'flex', gap: 4, background: '#fff', borderRadius: 22, padding: '5px 9px', boxShadow: '0 3px 12px rgba(0,0,0,.22)', zIndex: 5 }}>
+                      {EMOJIS.map((em) => (
+                        <span key={em} onClick={(e) => { e.stopPropagation(); react(l.id!, em); }} style={{ cursor: 'pointer', fontSize: 21, lineHeight: 1 }}>{em}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {!lines.length && <div style={{ textAlign: 'center', color: '#54656f', marginTop: 30 }}>No messages yet — say hi 👋</div>}
           </div>
           <div style={{ display: 'flex', gap: 8, padding: 10, background: '#f0f2f5', alignItems: 'center' }}>
-            <label title="Attach photo, video or document" style={{ fontSize: 24, cursor: sendingMedia ? 'default' : 'pointer', flexShrink: 0, opacity: sendingMedia ? 0.5 : 1, lineHeight: 1 }}>
+            <label title="Attach photo, video or any file" style={{ fontSize: 24, cursor: sendingMedia ? 'default' : 'pointer', flexShrink: 0, opacity: sendingMedia ? 0.5 : 1, lineHeight: 1 }}>
               {sendingMedia ? '⏳' : '📎'}
-              <input ref={fileRef} type="file" hidden accept="image/*,video/*,audio/*,application/pdf" disabled={sendingMedia}
+              <input ref={fileRef} type="file" hidden accept="*/*" disabled={sendingMedia}
                 onChange={(e) => { const f = e.target.files?.[0]; e.currentTarget.value = ''; if (f) sendFile(f); }} />
             </label>
             <input style={{ ...input, borderRadius: 22, background: '#fff' }} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Type a message…"

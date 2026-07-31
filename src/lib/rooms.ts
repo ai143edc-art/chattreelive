@@ -16,7 +16,8 @@ export interface RoomInfo {
   history: Message[];
   isCreator: boolean;   // is the person joining the room's owner (vs the guest)?
 }
-export interface RoomMedia { url: string; type: string; name: string }   // type: image | video | audio | file
+export interface RoomMedia { url: string; type: string; name: string; size?: number }   // type: image | video | audio | file
+export interface Reaction { by: string; emoji: string }
 export interface RoomMessage {
   id?: number;
   sender: Side;
@@ -26,6 +27,7 @@ export interface RoomMessage {
   mediaUrl?: string | null;
   mediaType?: string | null;
   mediaName?: string | null;
+  reactions?: Reaction[];
 }
 export interface MyRoom {
   id: string;
@@ -56,14 +58,23 @@ export async function joinRoom(id: string, pin: string): Promise<RoomInfo | null
 /** Load the saved continued messages of a room (everything sent after the import). */
 export async function fetchRoomMessages(id: string): Promise<RoomMessage[]> {
   const { data, error } = await sb.from('room_messages')
-    .select('id, sender, sender_name, body, created_at, media_url, media_type, media_name')
+    .select('id, sender, sender_name, body, created_at, media_url, media_type, media_name, reactions')
     .eq('room_id', id).order('id', { ascending: true });
   if (error) throw error;
   return (data || []).map((r) => ({
     id: r.id as number, sender: r.sender as Side, senderName: r.sender_name as string,
     body: r.body as string, createdAt: r.created_at as string,
     mediaUrl: r.media_url as string | null, mediaType: r.media_type as string | null, mediaName: r.media_name as string | null,
+    reactions: (r.reactions as Reaction[] | null) || [],
   }));
+}
+
+/** Add / change / remove your emoji reaction on a message (PIN-checked; realtime delivers it). */
+export async function reactMessage(id: string, pin: string, messageId: number, by: string, emoji: string): Promise<void> {
+  const { error } = await sb.rpc('react_message', {
+    p_id: id, p_pin: pin, p_message_id: messageId, p_by: by, p_emoji: emoji,
+  });
+  if (error) throw error;
 }
 
 /** Post a message (the PIN is verified server-side; realtime then delivers it to both sides). */
@@ -86,18 +97,25 @@ export async function uploadRoomMedia(roomId: string, file: File): Promise<RoomM
   const type = file.type.startsWith('image/') ? 'image'
     : file.type.startsWith('video/') ? 'video'
       : file.type.startsWith('audio/') ? 'audio' : 'file';
-  return { url, type, name: file.name };
+  return { url, type, name: file.name, size: file.size };
 }
 
-/** Live-subscribe to new messages in a room. Returns an unsubscribe function. */
+type RowShape = { id: number; sender: Side; sender_name: string; body: string; created_at: string; media_url: string | null; media_type: string | null; media_name: string | null; reactions: Reaction[] | null };
+const rowToMsg = (r: RowShape): RoomMessage => ({
+  id: r.id, sender: r.sender, senderName: r.sender_name, body: r.body, createdAt: r.created_at,
+  mediaUrl: r.media_url, mediaType: r.media_type, mediaName: r.media_name, reactions: r.reactions || [],
+});
+
+/** Live-subscribe to a room. Fires on new messages AND on reaction changes (INSERT + UPDATE).
+ *  The callback should upsert by id (replace if present, else append). Returns an unsubscribe fn. */
 export function subscribeRoom(id: string, onMessage: (m: RoomMessage) => void): () => void {
   const ch: RealtimeChannel = sb
     .channel(`room-${id}`)
     .on('postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'room_messages', filter: `room_id=eq.${id}` },
+      { event: '*', schema: 'public', table: 'room_messages', filter: `room_id=eq.${id}` },
       (payload) => {
-        const r = payload.new as { id: number; sender: Side; sender_name: string; body: string; created_at: string; media_url: string | null; media_type: string | null; media_name: string | null };
-        onMessage({ id: r.id, sender: r.sender, senderName: r.sender_name, body: r.body, createdAt: r.created_at, mediaUrl: r.media_url, mediaType: r.media_type, mediaName: r.media_name });
+        if (payload.eventType === 'DELETE') return;
+        onMessage(rowToMsg(payload.new as RowShape));
       })
     .subscribe();
   return () => { sb.removeChannel(ch); };
