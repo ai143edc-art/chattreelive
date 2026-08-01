@@ -4,6 +4,8 @@ import {
   type StoredRoom, type MyRoom, type RoomMeta,
 } from '../lib/rooms';
 import { confirmDialog, alertDialog } from '../lib/dialog';
+import { useLang } from '../lib/i18n';
+import type { TKey } from '../lib/i18n';
 
 /**
  * "My continue-chats" — recover a live room even if the share link is lost, and
@@ -19,21 +21,24 @@ interface Props {
   onLogin: () => void;
 }
 
-const CATS = [
-  { k: 'Family', e: '👨‍👩‍👧' }, { k: 'Friends', e: '🧑‍🤝‍🧑' }, { k: 'Love', e: '❤️' },
-  { k: 'Work', e: '💼' }, { k: 'Study', e: '📚' }, { k: 'Other', e: '🏷️' },
+// `k` is a STABLE key (stored as the room's tag — never translate it); `tk` is
+// the i18n key for the label we actually show, so switching language is display-only.
+const CATS: { k: string; e: string; tk: TKey }[] = [
+  { k: 'Family', e: '👨‍👩‍👧', tk: 'mrCatFamily' }, { k: 'Friends', e: '🧑‍🤝‍🧑', tk: 'mrCatFriends' }, { k: 'Love', e: '❤️', tk: 'mrCatLove' },
+  { k: 'Work', e: '💼', tk: 'mrCatWork' }, { k: 'Study', e: '📚', tk: 'mrCatStudy' }, { k: 'Other', e: '🏷️', tk: 'mrCatOther' },
 ];
 
-function ago(iso: string | number): string {
+function ago(iso: string | number, t: (k: TKey) => string): string {
   const d = new Date(iso); const now = new Date();
   const s = (now.getTime() - d.getTime()) / 1000;
-  if (s < 60) return 'just now';
-  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
-  if (d.toDateString() === now.toDateString()) return `today ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  if (s < 60) return t('ccJustNow');
+  if (s < 3600) return `${Math.floor(s / 60)}${t('mrMinAgo')}`;
+  if (d.toDateString() === now.toDateString()) return `${t('ccToday')} ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
   return d.toLocaleDateString([], { day: '2-digit', month: 'short' });
 }
 
 export default function MyRooms({ userEmail, onOpen, onBack, onLogin }: Props) {
+  const { t } = useLang();
   const [recent, setRecent] = useState<StoredRoom[]>([]);
   const [mine, setMine] = useState<MyRoom[]>([]);
   const [loading, setLoading] = useState(false);
@@ -62,12 +67,10 @@ export default function MyRooms({ userEmail, onOpen, onBack, onLogin }: Props) {
   function startRename(id: string, current: string) { setTagging(null); setEditing(id); setEditVal(current); }
   function saveRename(id: string) { updateMeta(id, { title: editVal.trim() || undefined }); setEditing(null); }
   async function del(id: string, owned: boolean) {
-    const msg = owned
-      ? 'This chat will be permanently deleted for BOTH people (all messages too). This cannot be undone.'
-      : 'This chat will be removed from this device (the other person keeps it).';
-    if (!(await confirmDialog({ title: owned ? 'Delete chat' : 'Remove from device', message: msg, confirmLabel: owned ? 'Delete' : 'Remove', danger: owned }))) return;
+    const msg = owned ? t('mrDelOwnedMsg') : t('mrDelGuestMsg');
+    if (!(await confirmDialog({ title: owned ? t('mrDelOwnedTitle') : t('mrDelGuestTitle'), message: msg, confirmLabel: owned ? t('mrDeleteT') : t('mrRemove'), danger: owned }))) return;
     try { if (owned) await deleteRoom(id); }
-    catch (e) { alertDialog({ title: 'Error', message: `Couldn't delete: ${(e as Error).message}` }); return; }
+    catch (e) { alertDialog({ title: t('mrError'), message: `${t('mrCantDelete')} ${(e as Error).message}` }); return; }
     forgetRoom(id); setRecent(recentRooms());
     setMine((m) => m.filter((x) => x.id !== id));
   }
@@ -82,7 +85,7 @@ export default function MyRooms({ userEmail, onOpen, onBack, onLogin }: Props) {
 
   function card(id: string, fallbackName: string, subtitle: string, owned: boolean, pin?: string) {
     const m = meta[id] || {};
-    const title = m.title || fallbackName || 'Chat';
+    const title = m.title || fallbackName || t('mrChatFallback');
     const cat = CATS.find((c) => c.k === m.tag);
     return (
       <div key={id} style={cardOuter}>
@@ -101,27 +104,27 @@ export default function MyRooms({ userEmail, onOpen, onBack, onLogin }: Props) {
               <>
                 <div style={{ fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {title}
-                  {cat && <span style={{ marginLeft: 6, fontSize: 11.5, background: '#e7f6ee', color: '#0a6b5b', borderRadius: 10, padding: '1px 7px', fontWeight: 600 }}>{cat.e} {cat.k}</span>}
+                  {cat && <span style={{ marginLeft: 6, fontSize: 11.5, background: '#e7f6ee', color: '#0a6b5b', borderRadius: 10, padding: '1px 7px', fontWeight: 600 }}>{cat.e} {t(cat.tk)}</span>}
                 </div>
                 <div style={{ fontSize: 12.5, color: '#8696a0' }}>{subtitle}</div>
               </>
             )}
           </div>
           <div style={{ display: 'flex', gap: 5, flexShrink: 0 }}>
-            <button style={iconBtn} title="Label" onClick={() => { setEditing(null); setTagging((t) => (t === id ? null : id)); }}>🏷️</button>
-            <button style={iconBtn} title="Copy link" onClick={() => copyLink(id, pin)}>{copied === id ? '✓' : '🔗'}</button>
-            <button style={iconBtn} title="Rename" onClick={() => startRename(id, title)}>✏️</button>
-            <button style={{ ...iconBtn, color: '#d3396d' }} title="Delete" onClick={() => del(id, owned)}>🗑️</button>
+            <button style={iconBtn} title={t('mrLabel')} onClick={() => { setEditing(null); setTagging((prev) => (prev === id ? null : id)); }}>🏷️</button>
+            <button style={iconBtn} title={t('mrCopyLinkT')} onClick={() => copyLink(id, pin)}>{copied === id ? '✓' : '🔗'}</button>
+            <button style={iconBtn} title={t('mrRenameT')} onClick={() => startRename(id, title)}>✏️</button>
+            <button style={{ ...iconBtn, color: '#d3396d' }} title={t('mrDeleteT')} onClick={() => del(id, owned)}>🗑️</button>
           </div>
-          <button style={openBtn} onClick={() => onOpen(id, pin)}>Open</button>
+          <button style={openBtn} onClick={() => onOpen(id, pin)}>{t('mrOpen')}</button>
         </div>
         {tagging === id && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginTop: 10, paddingTop: 10, borderTop: '1px solid #eef2f0' }}>
             {CATS.map((c) => (
               <button key={c.k} style={{ ...chip, ...(m.tag === c.k ? { background: '#25d366', color: '#fff', borderColor: '#25d366' } : {}) }}
-                onClick={() => { updateMeta(id, { tag: c.k }); setTagging(null); }}>{c.e} {c.k}</button>
+                onClick={() => { updateMeta(id, { tag: c.k }); setTagging(null); }}>{c.e} {t(c.tk)}</button>
             ))}
-            {m.tag && <button style={{ ...chip, color: '#d3396d' }} onClick={() => { updateMeta(id, { tag: undefined }); setTagging(null); }}>✕ Clear</button>}
+            {m.tag && <button style={{ ...chip, color: '#d3396d' }} onClick={() => { updateMeta(id, { tag: undefined }); setTagging(null); }}>{t('mrClear')}</button>}
           </div>
         )}
       </div>
@@ -132,29 +135,29 @@ export default function MyRooms({ userEmail, onOpen, onBack, onLogin }: Props) {
     <div style={{ minHeight: '100vh', background: '#eae6df' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 18px', background: '#fff', borderBottom: '1px solid #e6ebe9' }}>
         <span style={{ fontWeight: 800, color: '#128c7e', cursor: 'pointer' }} onClick={onBack}>‹ Chat Tree</span>
-        <span style={{ fontSize: 13, color: '#54656f' }}>My continue-chats</span>
+        <span style={{ fontSize: 13, color: '#54656f' }}>{t('mrHeaderTitle')}</span>
       </header>
 
       <div style={wrap}>
-        <h2 style={{ margin: '4px 0 2px' }}>Your live chats 🔗</h2>
-        <p style={{ color: '#54656f', marginTop: 2 }}>Lost the link? Reopen a chat from here — and label, rename or delete it.</p>
+        <h2 style={{ margin: '4px 0 2px' }}>{t('mrTitle')}</h2>
+        <p style={{ color: '#54656f', marginTop: 2 }}>{t('mrSub')}</p>
 
-        <h3 style={{ margin: '18px 0 8px', fontSize: 14, color: '#54656f', textTransform: 'uppercase', letterSpacing: 0.5 }}>On this device</h3>
-        {recent.length === 0 && <div style={{ color: '#8696a0', fontSize: 14, marginBottom: 8 }}>No chats saved on this device yet.</div>}
-        {recent.map((r) => card(r.id, r.otherName, `${r.isCreator ? 'You started this' : 'You joined this'} · ${ago(r.at)}`, r.isCreator, r.pin))}
+        <h3 style={{ margin: '18px 0 8px', fontSize: 14, color: '#54656f', textTransform: 'uppercase', letterSpacing: 0.5 }}>{t('mrOnDevice')}</h3>
+        {recent.length === 0 && <div style={{ color: '#8696a0', fontSize: 14, marginBottom: 8 }}>{t('mrNoneDevice')}</div>}
+        {recent.map((r) => card(r.id, r.otherName, `${r.isCreator ? t('mrYouStarted') : t('mrYouJoined')} · ${ago(r.at, t)}`, r.isCreator, r.pin))}
 
-        <h3 style={{ margin: '22px 0 8px', fontSize: 14, color: '#54656f', textTransform: 'uppercase', letterSpacing: 0.5 }}>Saved to your account</h3>
+        <h3 style={{ margin: '22px 0 8px', fontSize: 14, color: '#54656f', textTransform: 'uppercase', letterSpacing: 0.5 }}>{t('mrSavedAccount')}</h3>
         {!userEmail ? (
           <div style={{ background: '#fff8e6', border: '1px solid #f2e2b6', borderRadius: 10, padding: 14, color: '#6b5a2a', fontSize: 14 }}>
-            <a role="button" style={{ color: '#128c7e', fontWeight: 700, cursor: 'pointer' }} onClick={onLogin}>Log in</a> to see chats you created — saved to your account, so you can recover the link from <b>any</b> device (you'll just re-enter your PIN).
+            <a role="button" style={{ color: '#128c7e', fontWeight: 700, cursor: 'pointer' }} onClick={onLogin}>{t('logIn')}</a> {t('mrLoginBox')}
           </div>
         ) : loading ? (
-          <div style={{ color: '#8696a0', fontSize: 14 }}>Loading…</div>
+          <div style={{ color: '#8696a0', fontSize: 14 }}>{t('mrLoading')}</div>
         ) : accountOnly.length === 0 ? (
-          <div style={{ color: '#8696a0', fontSize: 14 }}>Nothing else — the chats you created show above.</div>
-        ) : accountOnly.map((mr) => card(mr.id, mr.guestName, `You created this · active ${ago(mr.lastActiveAt)}`, true))}
+          <div style={{ color: '#8696a0', fontSize: 14 }}>{t('mrNothingElse')}</div>
+        ) : accountOnly.map((mr) => card(mr.id, mr.guestName, `${t('mrYouCreated')} · ${t('mrActive')} ${ago(mr.lastActiveAt, t)}`, true))}
 
-        <button style={{ ...chip, marginTop: 20, padding: '10px 18px' }} onClick={onBack}>‹ Back</button>
+        <button style={{ ...chip, marginTop: 20, padding: '10px 18px' }} onClick={onBack}>{t('mrBack')}</button>
       </div>
     </div>
   );

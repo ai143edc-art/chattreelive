@@ -135,14 +135,14 @@ export default function Uploader({ onLoaded, onContinue, onMyRooms, onHistory, o
 
           <button className="up-card blank" onClick={() => { if (!busy) { modeRef.current = 'continue'; inputRef.current?.click(); } }}>
             <span className="up-ic">🔗</span>
-            <span className="up-ct">Continue chat</span>
-            <span className="up-cd">Import a chat, then keep it going live with the other person</span>
+            <span className="up-ct">{t('upContinueTitle')}</span>
+            <span className="up-cd">{t('upContinueDesc')}</span>
           </button>
         </div>
 
         <div className="up-foot">
           <button className="lp-cta ghost" onClick={onHistory}>{t('upOpenHistory')}</button>
-          <button className="lp-cta ghost" onClick={onMyRooms}>🔗 My continue-chats</button>
+          <button className="lp-cta ghost" onClick={onMyRooms}>{t('upMyRooms')}</button>
           <div className="up-note">
             {userEmail
               ? <>{t('upLoggedInAs')} <b>{userEmail}</b> · <a role="button" tabIndex={0} onClick={onAccount} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onAccount(); } }}>{t('upAccount')}</a></>
