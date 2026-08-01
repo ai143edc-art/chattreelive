@@ -128,7 +128,7 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
     };
     syncRef.current = sync;
     sync();
-    const hb = window.setInterval(sync, 10000);
+    const hb = window.setInterval(sync, 5000);
     const onVis = () => { if (document.visibilityState === 'visible') sync(); };
     document.addEventListener('visibilitychange', onVis);
 
@@ -287,7 +287,7 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
 
   const keyOf = (l: Line, i: number) => (l.id != null ? `m${l.id}` : `h${i}`);
   const mmss = `${Math.floor(recSecs / 60)}:${String(recSecs % 60).padStart(2, '0')}`;
-  const otherOnline = !!otherSeenAt && Date.now() - new Date(otherSeenAt).getTime() < 35000;
+  const otherOnline = !!otherSeenAt && Date.now() - new Date(otherSeenAt).getTime() < 20000;
   const statusText = otherTyping ? 'typing…' : otherOnline ? 'online' : otherSeenAt ? `last seen ${fmtLastSeen(otherSeenAt)}` : '';
 
   const wrap: React.CSSProperties = { maxWidth: 520, margin: '0 auto', padding: '20px 16px' };
