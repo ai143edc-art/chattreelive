@@ -13,6 +13,7 @@ import HistoryModal from './components/HistoryModal';
 import AuthModal from './components/AuthModal';
 import ContinueChat from './components/ContinueChat';
 import MyRooms from './components/MyRooms';
+import { recentRooms } from './lib/rooms';
 import { alertDialog, promptDialog } from './lib/dialog';
 import StatsModal from './components/StatsModal';
 import AccountModal from './components/AccountModal';
@@ -54,7 +55,11 @@ export default function App() {
     { mode: 'create'; messages: P.Message[]; senders: string[]; media: Record<string, Blob> } | { mode: 'join'; roomId: string; autoPin?: string } | null
   >(() => {
     const id = new URLSearchParams(location.search).get('room');
-    return id ? { mode: 'join', roomId: id } : null;
+    if (!id) return null;
+    // If we've been in this room before, reopen it straight away with the saved
+    // PIN (no prompt) — so a refresh lands back in the chat, not the join screen.
+    const saved = recentRooms().find((r) => r.id === id);
+    return { mode: 'join', roomId: id, autoPin: saved?.pin };
   });
   const [recovery, setRecovery] = useState(false);
   const [rawText, setRawText] = useState('');
@@ -122,23 +127,33 @@ export default function App() {
   // When the user returns from a password-reset email, prompt for a new password.
   useEffect(() => onPasswordRecovery(() => setRecovery(true)), []);
 
-  // ---- browser/phone Back button support (keeps the chat, just changes screen) ----
-  const histFirst = useRef(true);
-  const histSkip = useRef(false);
+  // ---- browser/phone Back button support ----
+  // Seed history so the FIRST Back press stays INSIDE the app instead of leaving
+  // the site. When we boot straight into a deep screen (e.g. someone opening a
+  // ?room= invite link), stack 'landing' underneath it, so Back returns to the
+  // app (and the chat is one Forward away) instead of dumping them back to
+  // wherever they tapped the link. lastPushed = the screen the top history
+  // entry currently reflects, so we never push a duplicate.
+  type Screen = 'landing' | 'upload' | 'viewer' | 'shared' | 'privacy' | 'terms' | 'continue' | 'myrooms';
+  const lastPushed = useRef<Screen>('landing');
   useEffect(() => {
     window.history.replaceState({ screen: 'landing' }, '');
+    if (screen !== 'landing') window.history.pushState({ screen }, '');
+    lastPushed.current = screen;
     const onPop = (e: PopStateEvent) => {
-      histSkip.current = true;
-      setScreen((e.state?.screen as 'landing' | 'upload' | 'viewer' | 'shared' | 'privacy' | 'terms') || 'landing');
+      const s = (e.state?.screen as Screen) || 'landing';
+      lastPushed.current = s;
+      setScreen(s);
       setHistoryOpen(false); setAuthOpen(false); setAccountOpen(false); setStatsOpen(false); setSettingsOpen(false);
     };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
-    if (histFirst.current) { histFirst.current = false; return; }
-    if (histSkip.current) { histSkip.current = false; return; }
+    if (screen === lastPushed.current) return;   // already reflected (initial seed or a popstate)
     window.history.pushState({ screen }, '');
+    lastPushed.current = screen;
   }, [screen]);
 
   // open a shared chat if the URL has ?c=<token>
@@ -516,7 +531,12 @@ export default function App() {
           autoPin={continueMode.mode === 'join' ? continueMode.autoPin : undefined}
           userEmail={userEmail}
           onLogin={() => setAuthOpen(true)}
-          onHome={() => { setContinueMode(null); setScreen('landing'); }}
+          onHome={() => {
+            // drop ?room= so a later refresh on the home screen doesn't jump back in
+            const u = new URL(window.location.href);
+            if (u.searchParams.has('room')) { u.searchParams.delete('room'); window.history.replaceState(window.history.state, '', u); }
+            setContinueMode(null); setScreen('landing');
+          }}
         />
         <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} toast={toast} />
         <ResetPasswordModal open={recovery} onDone={() => setRecovery(false)} toast={toast} />

@@ -198,6 +198,18 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Reflect the active room in the URL (?room=<id>) so a page refresh drops you
+  // right back into THIS chat (the saved PIN auto-rejoins) instead of the
+  // landing/join screen — matters for the creator, whose URL has no ?room= yet.
+  useEffect(() => {
+    if (phase !== 'chat' || !room) return;
+    const u = new URL(window.location.href);
+    if (u.searchParams.get('room') !== room.id) {
+      u.searchParams.set('room', room.id);
+      window.history.replaceState(window.history.state, '', u);
+    }
+  }, [phase, room]);
+
   async function send() {
     if (!room || !draft.trim()) return;
     const body = draft.trim(); const rep = replyTo;
@@ -331,12 +343,23 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
 
       {phase === 'join' && (
         <div style={wrap}>
-          <h2 style={{ margin: '6px 0' }}>Join the chat 🔗</h2>
-          <p style={{ color: '#54656f', marginTop: 0 }}>Enter the PIN the other person shared with you.</p>
-          <input style={{ ...input, margin: '10px 0 16px', letterSpacing: 3, textAlign: 'center', fontSize: 20 }} value={joinPin} onChange={(e) => setJoinPin(e.target.value)} placeholder="PIN" inputMode="numeric"
-            onKeyDown={(e) => { if (e.key === 'Enter') doJoin(); }} />
-          <button style={{ ...btn, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={() => doJoin()}>{busy ? 'Joining…' : 'Join chat'}</button>
-          {err && <div style={{ color: '#d3396d', marginTop: 12 }}>{err}</div>}
+          {autoPin && !err ? (
+            // reopening a saved room → show a loader, not the PIN form, so a
+            // refresh doesn't flash "enter PIN" before it auto-rejoins.
+            <div style={{ textAlign: 'center', padding: '44px 0', color: '#54656f' }}>
+              <span className="spinner" style={{ margin: '0 auto 14px' }} />
+              <p style={{ margin: 0 }}>Reopening your chat…</p>
+            </div>
+          ) : (
+            <>
+              <h2 style={{ margin: '6px 0' }}>Join the chat 🔗</h2>
+              <p style={{ color: '#54656f', marginTop: 0 }}>Enter the PIN the other person shared with you.</p>
+              <input style={{ ...input, margin: '10px 0 16px', letterSpacing: 3, textAlign: 'center', fontSize: 20 }} value={joinPin} onChange={(e) => setJoinPin(e.target.value)} placeholder="PIN" inputMode="numeric"
+                onKeyDown={(e) => { if (e.key === 'Enter') doJoin(); }} />
+              <button style={{ ...btn, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={() => doJoin()}>{busy ? 'Joining…' : 'Join chat'}</button>
+              {err && <div style={{ color: '#d3396d', marginTop: 12 }}>{err}</div>}
+            </>
+          )}
         </div>
       )}
 
