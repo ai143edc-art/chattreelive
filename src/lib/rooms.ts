@@ -271,9 +271,19 @@ export function setRoomMeta(id: string, patch: RoomMeta): void {
   } catch { /* ignore */ }
 }
 
-/** Permanently delete a room + all its messages (both sides). Only the logged-in
- *  creator can — returns true if it was actually deleted on the server. */
+/** Permanently delete a room + EVERYTHING it owns — messages (cascade) AND the
+ *  uploaded media files — then the link is dead for both people. Only the
+ *  logged-in creator can. Returns true if the room was deleted on the server. */
 export async function deleteRoom(id: string): Promise<boolean> {
+  // 1) remove the room's media files first, while the room row still exists
+  //    (the storage policy checks creator ownership against that row).
+  try {
+    const { data: files } = await sb.storage.from('room-media').list(id, { limit: 1000 });
+    if (files && files.length) {
+      await sb.storage.from('room-media').remove(files.map((f) => `${id}/${f.name}`));
+    }
+  } catch { /* best-effort: even if this fails, deleting the row below kills the chat + link */ }
+  // 2) delete the room row → link stops resolving + room_messages cascade away
   const { data, error } = await sb.rpc('delete_room', { p_id: id });
   if (error) throw error;
   return !!data;
