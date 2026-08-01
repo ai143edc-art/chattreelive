@@ -14,6 +14,7 @@ import AuthModal from './components/AuthModal';
 import ContinueChat from './components/ContinueChat';
 import MyRooms from './components/MyRooms';
 import { recentRooms } from './lib/rooms';
+import { loadScreen, saveScreen, loadDraft, saveDraft } from './lib/session';
 import { alertDialog, promptDialog } from './lib/dialog';
 import StatsModal from './components/StatsModal';
 import AccountModal from './components/AccountModal';
@@ -38,6 +39,17 @@ import { useLang } from './lib/i18n';
 
 const DEFAULT_MODEL = MODELS.find((m) => m.name.startsWith('iPhone 12')) || MODELS[3];
 
+// Restore the editor draft on a refresh — computed once at load. Explicit URL
+// entry points (privacy / terms / shared ?c= / room ?room=) take precedence, so
+// we only rehydrate the local editor when the URL isn't pointing somewhere else.
+const BOOT_DRAFT = (() => {
+  try {
+    const p = new URLSearchParams(location.search);
+    if (p.has('privacy') || p.has('terms') || p.has('c') || p.has('room')) return null;
+    return loadScreen() === 'viewer' ? loadDraft() : null;
+  } catch { return null; }
+})();
+
 export default function App() {
   const { t } = useLang();
   const [screen, setScreen] = useState<'landing' | 'upload' | 'viewer' | 'shared' | 'privacy' | 'terms' | 'continue' | 'myrooms'>(
@@ -46,6 +58,12 @@ export default function App() {
       if (p.has('privacy')) return 'privacy';
       if (p.has('terms')) return 'terms';
       if (p.has('room')) return 'continue';
+      if (p.has('c')) return 'landing';          // a shared chat loads via its own effect
+      // refresh / reopen → land back on the same page as last time
+      if (BOOT_DRAFT) return 'viewer';
+      const ls = loadScreen();
+      if (ls === 'upload') return 'upload';
+      if (ls === 'myrooms') return 'myrooms';
       return 'landing';
     },
   );
@@ -62,8 +80,8 @@ export default function App() {
     return { mode: 'join', roomId: id, autoPin: saved?.pin };
   });
   const [recovery, setRecovery] = useState(false);
-  const [rawText, setRawText] = useState('');
-  const [mediaMap, setMediaMap] = useState<Record<string, string>>({});
+  const [rawText, setRawText] = useState(BOOT_DRAFT ? JSON.stringify(BOOT_DRAFT.messages) : '');
+  const [mediaMap, setMediaMap] = useState<Record<string, string>>(BOOT_DRAFT?.mediaMap ?? {});
   const [mediaBlobs, setMediaBlobs] = useState<Record<string, Blob>>({});
   // A blob: URL pins its Blob in memory until it is revoked. Open a 400-photo
   // chat, then open another, and the first chat's photos never leave the tab.
@@ -75,16 +93,18 @@ export default function App() {
     liveBlobUrls.current = next;
   }, [mediaMap]);
   useEffect(() => () => { for (const url of liveBlobUrls.current) URL.revokeObjectURL(url); }, []);
-  const [messages, setMessages] = useState<P.Message[]>([]);
-  const [senders, setSenders] = useState<string[]>([]);
-  const [meName, setMeName] = useState<string | null>(null);
-  const [contactTitle, setContactTitle] = useState('Chat');
-  const [status, setStatus] = useState('online');
-  const [showStatusBar, setShowStatusBar] = useState(true);
-  const [dateOrder, setDateOrder] = useState<P.DateOrder>('DMY');
-  const [model, setModel] = useState<PhoneModel>(DEFAULT_MODEL);
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [showFrame, setShowFrame] = useState(true);
+  const [messages, setMessages] = useState<P.Message[]>(BOOT_DRAFT?.messages ?? []);
+  const [senders, setSenders] = useState<string[]>(BOOT_DRAFT?.senders ?? []);
+  const [meName, setMeName] = useState<string | null>(BOOT_DRAFT?.meName ?? null);
+  const [contactTitle, setContactTitle] = useState(BOOT_DRAFT?.contactTitle ?? 'Chat');
+  const [status, setStatus] = useState(BOOT_DRAFT?.status ?? 'online');
+  const [showStatusBar, setShowStatusBar] = useState(BOOT_DRAFT?.showStatusBar ?? true);
+  const [dateOrder, setDateOrder] = useState<P.DateOrder>(BOOT_DRAFT?.dateOrder ?? 'DMY');
+  const [model, setModel] = useState<PhoneModel>(
+    (BOOT_DRAFT && MODELS.find((m) => m.name === BOOT_DRAFT.modelName)) || DEFAULT_MODEL,
+  );
+  const [theme, setTheme] = useState<'light' | 'dark'>(BOOT_DRAFT?.theme ?? 'light');
+  const [showFrame, setShowFrame] = useState(BOOT_DRAFT?.showFrame ?? true);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   // Entering edit mode re-renders every row (each grows a toolbar and an
@@ -96,7 +116,7 @@ export default function App() {
   const [composeText, setComposeText] = useState('');
   const [composeSide, setComposeSide] = useState<'me' | 'other'>('me');
   const [replyTarget, setReplyTarget] = useState<{ sender: string; text: string } | null>(null);
-  const [showTyping, setShowTyping] = useState(false);
+  const [showTyping, setShowTyping] = useState(BOOT_DRAFT?.showTyping ?? false);
   const [lightbox, setLightbox] = useState<{ url: string; kind: 'img' | 'video' } | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
@@ -109,10 +129,10 @@ export default function App() {
   const [translations, setTranslations] = useState<Record<number, string>>({});
   const [translated, setTranslated] = useState(false);
   const [translating, setTranslating] = useState(false);
-  const [wallpaper, setWallpaper] = useState('');
+  const [wallpaper, setWallpaper] = useState(BOOT_DRAFT?.wallpaper ?? '');
   const [search, setSearch] = useState('');
   const [matchPos, setMatchPos] = useState(0);
-  const [avatar, setAvatar] = useState<string | null>(null);
+  const [avatar, setAvatar] = useState<string | null>(BOOT_DRAFT?.avatar ?? null);
   const [saving, setSaving] = useState(false);
   const [saveOpen, setSaveOpen] = useState(false);
   const [bookOpen, setBookOpen] = useState(false);
@@ -126,6 +146,26 @@ export default function App() {
   useEffect(() => onAuthChange(setSession), []);
   // When the user returns from a password-reset email, prompt for a new password.
   useEffect(() => onPasswordRecovery(() => setRecovery(true)), []);
+
+  // ---- refresh persistence: reload the same page you were on ----
+  // Remember the current page so a refresh reopens it (not the landing screen).
+  // 'shared'/'continue'/'privacy'/'terms' restore from their own URL, so we only
+  // record the localStorage-driven ones here.
+  useEffect(() => {
+    if (screen === 'landing' || screen === 'upload' || screen === 'viewer' || screen === 'myrooms') saveScreen(screen);
+  }, [screen]);
+  // Auto-save the chat you're building/editing (debounced) so a refresh brings it
+  // back with all its settings. Media from a .zip (blob: URLs) can't be persisted.
+  useEffect(() => {
+    if (screen !== 'viewer') return;
+    const id = window.setTimeout(() => {
+      saveDraft({
+        messages, senders, meName, contactTitle, status, showStatusBar, showTyping,
+        dateOrder, modelName: model.name, theme, showFrame, wallpaper, avatar, mediaMap,
+      });
+    }, 600);
+    return () => window.clearTimeout(id);
+  }, [screen, messages, senders, meName, contactTitle, status, showStatusBar, showTyping, dateOrder, model, theme, showFrame, wallpaper, avatar, mediaMap]);
 
   // ---- browser/phone Back button support ----
   // Seed history so the FIRST Back press stays INSIDE the app instead of leaving
