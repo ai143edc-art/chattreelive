@@ -5,15 +5,18 @@
 // the PIN is the second gate. NOTE: this is an experiment — messages are NOT
 // end-to-end encrypted; they live on our server.
 import { sb } from './supabase';
-import type { Message } from './parser';
+import { findAttachment, type Message } from './parser';
 import type { RealtimeChannel } from '@supabase/supabase-js';
+
+// An imported history message may carry the uploaded media it referenced.
+export type HistoryMessage = Message & { mediaUrl?: string | null; mediaType?: string | null; mediaName?: string | null };
 
 export type Side = 'creator' | 'guest';
 
 export interface RoomInfo {
   creatorName: string;
   guestName: string;
-  history: Message[];
+  history: HistoryMessage[];
   isCreator: boolean;   // is the person joining the room's owner (vs the guest)?
 }
 export interface RoomMedia { url: string; type: string; name: string; size?: number }   // type: image | video | audio | file
@@ -124,6 +127,62 @@ export async function uploadRoomMedia(roomId: string, file: File): Promise<RoomM
     : file.type.startsWith('video/') ? 'video'
       : file.type.startsWith('audio/') ? 'audio' : 'file';
   return { url, type, name: file.name, size: file.size };
+}
+
+// Blobs pulled from a WhatsApp .zip usually have no MIME type — guess it from the
+// filename so uploaded media is classified (and rendered) as image/video/audio.
+const MIME: Record<string, string> = {
+  jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp', heic: 'image/heic',
+  mp4: 'video/mp4', '3gp': 'video/3gpp', mov: 'video/quicktime', mkv: 'video/x-matroska', webm: 'video/webm', avi: 'video/x-msvideo',
+  opus: 'audio/ogg', amr: 'audio/amr', mp3: 'audio/mpeg', aac: 'audio/aac', m4a: 'audio/mp4', wav: 'audio/wav', ogg: 'audio/ogg',
+  pdf: 'application/pdf', vcf: 'text/vcard',
+};
+export function guessMime(name: string): string {
+  return MIME[(name.match(/\.([a-z0-9]+)$/i)?.[1] || '').toLowerCase()] || 'application/octet-stream';
+}
+
+/** Upload the imported chat's media (blobs from the .zip) into the room's folder
+ *  and stamp each referenced history message with its uploaded URL, so the media
+ *  shows — for both people, permanently — just like WhatsApp. Returns the
+ *  (possibly) augmented history and whether anything was uploaded. */
+export async function uploadImportedMedia(
+  roomId: string,
+  messages: Message[],
+  blobs: Record<string, Blob>,
+  onProgress?: (done: number, total: number) => void,
+): Promise<{ history: HistoryMessage[]; changed: boolean }> {
+  const history = messages.map((m) => ({ ...m })) as HistoryMessage[];
+  // find the messages whose attachment we actually have a blob for
+  const jobs: { i: number; name: string; blob: Blob }[] = [];
+  for (let i = 0; i < history.length; i++) {
+    const att = findAttachment(history[i].text);
+    if (!att) continue;
+    const base = att.split('/').pop()!.toLowerCase();
+    const blob = blobs[base];
+    if (blob) jobs.push({ i, name: att.split('/').pop()!, blob });
+  }
+  if (!jobs.length) return { history, changed: false };
+
+  let done = 0;
+  onProgress?.(0, jobs.length);
+  for (const j of jobs) {
+    try {
+      const file = new File([j.blob], j.name, { type: j.blob.type || guessMime(j.name) });
+      const media = await uploadRoomMedia(roomId, file);
+      history[j.i].mediaUrl = media.url;
+      history[j.i].mediaType = media.type;
+      history[j.i].mediaName = media.name;
+    } catch { /* skip a file that fails; the rest still upload */ }
+    done++;
+    onProgress?.(done, jobs.length);
+  }
+  return { history, changed: true };
+}
+
+/** Replace a room's stored history (used after uploading imported media). PIN-checked. */
+export async function setRoomHistory(id: string, pin: string, history: HistoryMessage[]): Promise<void> {
+  const { error } = await sb.rpc('set_room_history', { p_id: id, p_pin: pin, p_history: history });
+  if (error) throw error;
 }
 
 type RowShape = { id: number; sender: Side; sender_name: string; body: string; created_at: string; media_url: string | null; media_type: string | null; media_name: string | null; reactions: Reaction[] | null; reply_name: string | null; reply_text: string | null; deleted: boolean | null };

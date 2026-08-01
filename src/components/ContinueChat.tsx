@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Message } from '../lib/parser';
+import { findAttachment, extractCaption, mediaLabel, placeholderLabel, PLACEHOLDERS, type Message } from '../lib/parser';
 import {
   createRoom, joinRoom, postMessage, subscribeRoom, fetchRoomMessages, uploadRoomMedia,
   reactMessage, deleteMessage, subscribeTyping, roomSync, rememberRoom,
-  type RoomMessage, type Reaction, type ReplyTo, type Side,
+  uploadImportedMedia, setRoomHistory,
+  type RoomMessage, type Reaction, type ReplyTo, type Side, type HistoryMessage,
 } from '../lib/rooms';
 
 /**
@@ -17,6 +18,7 @@ interface Props {
   mode: 'create' | 'join';
   importedMessages?: Message[];
   importedSenders?: string[];
+  importedMedia?: Record<string, Blob>;   // media blobs from the imported .zip
   roomId?: string;
   autoPin?: string;            // when reopening from a saved room: skip the PIN prompt
   userEmail: string | null;
@@ -24,7 +26,7 @@ interface Props {
   onHome: () => void;
 }
 
-interface ActiveRoom { id: string; pin: string; side: Side; myName: string; otherName: string; history: Message[] }
+interface ActiveRoom { id: string; pin: string; side: Side; myName: string; otherName: string; history: HistoryMessage[] }
 interface Line {
   id?: number; name: string; text: string; time?: string; mine: boolean;
   mediaUrl?: string | null; mediaType?: string | null; mediaName?: string | null;
@@ -63,11 +65,12 @@ function fmtLastSeen(iso: string): string {
   return `${d.toLocaleDateString([], { day: '2-digit', month: 'short' })} at ${t}`;
 }
 
-export default function ContinueChat({ mode, importedMessages, importedSenders, roomId: joinId, autoPin, userEmail, onLogin, onHome }: Props) {
+export default function ContinueChat({ mode, importedMessages, importedSenders, importedMedia, roomId: joinId, autoPin, userEmail, onLogin, onHome }: Props) {
   const senders = useMemo(() => importedSenders || [], [importedSenders]);
   const [phase, setPhase] = useState<'setup' | 'join' | 'chat'>(mode === 'create' ? 'setup' : 'join');
   const [room, setRoom] = useState<ActiveRoom | null>(null);
   const [busy, setBusy] = useState(false);
+  const [uploadProg, setUploadProg] = useState<{ d: number; t: number } | null>(null);
   const [err, setErr] = useState('');
 
   const [myName, setMyName] = useState(senders[senders.length - 1] || 'You');
@@ -156,7 +159,16 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
     setBusy(true);
     try {
       const id = await createRoom(pin.trim(), myName, otherName, importedMessages || []);
-      setRoom({ id, pin: pin.trim(), side: 'creator', myName, otherName, history: importedMessages || [] });
+      // Upload the imported chat's photos/videos/docs into the room, so they show
+      // (for both people, permanently) instead of just the filename text.
+      let history: HistoryMessage[] = (importedMessages || []) as HistoryMessage[];
+      if (importedMedia && Object.keys(importedMedia).length) {
+        const res = await uploadImportedMedia(id, importedMessages || [], importedMedia, (d, t) => setUploadProg({ d, t }));
+        history = res.history;
+        if (res.changed) await setRoomHistory(id, pin.trim(), history);
+        setUploadProg(null);
+      }
+      setRoom({ id, pin: pin.trim(), side: 'creator', myName, otherName, history });
       rememberRoom({ id, pin: pin.trim(), myName, otherName, isCreator: true });
       setPhase('chat');
     } catch (e) { setErr((e as Error).message || String(e)); } finally { setBusy(false); }
@@ -256,7 +268,16 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
   function copyLink() { navigator.clipboard?.writeText(`${shareLink}\nPIN: ${room?.pin}`).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1800); }); }
 
   const lines: Line[] = room ? [
-    ...room.history.filter((m) => !m.system && m.sender).map((m): Line => ({ name: m.sender!, text: m.text, time: m.time, mine: m.sender === room.myName })),
+    ...room.history.filter((m) => !m.system && m.sender).map((m): Line => {
+      const mine = m.sender === room.myName;
+      const att = findAttachment(m.text);
+      // imported media that we uploaded → render the real photo/video/doc
+      if (m.mediaUrl) return { name: m.sender!, text: att ? extractCaption(m.text, att) : m.text, time: m.time, mine, mediaUrl: m.mediaUrl, mediaType: m.mediaType, mediaName: m.mediaName };
+      // referenced a file we didn't get (or "image omitted") → show a WhatsApp-style label
+      if (att) { const cap = extractCaption(m.text, att); return { name: m.sender!, text: `${mediaLabel(att.split('.').pop() || '')}${cap ? `  ${cap}` : ''}`, time: m.time, mine }; }
+      if (PLACEHOLDERS.test(m.text)) return { name: m.sender!, text: placeholderLabel(m.text), time: m.time, mine };
+      return { name: m.sender!, text: m.text, time: m.time, mine };
+    }),
     ...live.map((m): Line => ({
       id: m.id, name: m.senderName, text: m.body, time: fmtTime(m.createdAt), mine: m.sender === room.side,
       mediaUrl: m.mediaUrl, mediaType: m.mediaType, mediaName: m.mediaName, reactions: m.reactions,
@@ -301,7 +322,9 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
           </select>
           <label style={{ fontWeight: 600, fontSize: 14 }}>Set a PIN (min 4) — share it with the other person</label>
           <input style={{ ...input, margin: '6px 0 16px' }} value={pin} onChange={(e) => setPin(e.target.value)} placeholder="e.g. 4821" inputMode="numeric" />
-          <button style={{ ...btn, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={doCreate}>{busy ? 'Creating…' : 'Create link'}</button>
+          <button style={{ ...btn, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={doCreate}>
+            {busy ? (uploadProg ? `Uploading media… ${uploadProg.d}/${uploadProg.t}` : 'Creating…') : 'Create link'}
+          </button>
           {err && <div style={{ color: '#d3396d', marginTop: 12 }}>{err}</div>}
         </div>
       )}
