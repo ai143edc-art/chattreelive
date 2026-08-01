@@ -172,6 +172,23 @@ export default function Landing({ onLaunch, onPrivacy, onTerms }: { onLaunch: ()
         </div>
       </section>
 
+      <section className="lp-sec lp-keep">
+        <div className="lp-keep-art lp-reveal">
+          <img src="/continue-chat.webp" width={700} height={637}
+            loading="lazy" decoding="async" alt={t('ccSecAlt')} />
+        </div>
+        <div className="lp-keep-txt lp-reveal">
+          <h2>{t('ccSecTitle')}</h2>
+          <p>{t('ccSecBody')}</p>
+          <ul className="lp-keep-list">
+            <li>{t('ccSecP1')}</li>
+            <li>{t('ccSecP2')}</li>
+            <li>{t('ccSecP3')}</li>
+          </ul>
+          <button className="lp-cta" onClick={onLaunch}>{t('ctaCreate')}</button>
+        </div>
+      </section>
+
       <section className="lp-sec lp-steps-sec">
         <h2>{t('stepsTitle')}</h2>
         <div className="lp-steps">
