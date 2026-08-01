@@ -296,8 +296,8 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
   const circle: React.CSSProperties = { ...btn, borderRadius: '50%', width: 46, height: 46, padding: 0, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#eae6df' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 18px', background: '#fff', borderBottom: '1px solid #e6ebe9' }}>
+    <div style={{ minHeight: '100dvh', background: '#eae6df' }}>
+      <header style={{ position: 'sticky', top: 0, zIndex: 30, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 18px', background: '#fff', borderBottom: '1px solid #e6ebe9' }}>
         <span style={{ fontWeight: 800, color: '#128c7e', cursor: 'pointer' }} onClick={onHome}>💬 Chat Tree</span>
         {phase === 'chat' && room ? (
           <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1.15 }}>
@@ -341,7 +341,7 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
       )}
 
       {phase === 'chat' && room && (
-        <div style={{ maxWidth: 520, margin: '0 auto', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 49px)' }}>
+        <div style={{ maxWidth: 520, margin: '0 auto', display: 'flex', flexDirection: 'column', height: 'calc(100dvh - 49px)' }}>
           {room.side === 'creator' && (
             <div style={{ background: '#d9fdd3', padding: '10px 14px', fontSize: 13.5, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
               <span>🔗 Share to invite <b>{room.otherName}</b>:</span>
