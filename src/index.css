@@ -818,9 +818,14 @@ body::before{
   .toolbar h1{font-size:15px;}
   .toolbar .logo{font-size:18px;}
   .panel{gap:8px;}
-  .settings-row{gap:6px;}
+  /* narrow phones: lay the controls out as a wrapping grid so labels never
+     overlap or get clipped (was a single non-wrapping flex row). grid makes
+     the children's inline flex:0 0 auto irrelevant, so everything sizes evenly. */
+  .settings-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:10px 8px;align-items:end;}
+  .settings-row .ctrl{min-width:0;}
+  .settings-row .swap-btn{justify-self:center;align-self:end;}
   .ctrl select,.ctrl input{width:100%;min-width:0;}
-  .ctrl label{font-size:10.5px;}
+  .ctrl label{font-size:10.5px;white-space:normal;overflow-wrap:anywhere;}
   .toolbar .spacer{display:none;}
   .actions-btns .btn{flex:1 1 calc(50% - 4px);text-align:center;padding:9px 8px;}
   .collapse-btn{padding:6px 10px;font-size:12px;}
