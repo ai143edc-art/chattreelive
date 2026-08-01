@@ -21,6 +21,7 @@ const PATHS: Record<string, string> = {
   device: 'M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z M10 5h4 M11 19h2',
   book: 'M4 4.5A2 2 0 0 1 6 3h13v15H6a2 2 0 0 0-2 2V4.5Z M19 18v3H6a2 2 0 0 1 0-4 M8 7.5h7',
   lock: 'M5 11h14v10H5z M8 11V7.5a4 4 0 0 1 8 0V11 M12 15v2.5',
+  link: 'M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71 M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71',
 };
 function Icon({ name }: { name: string }) {
   return (
@@ -88,6 +89,7 @@ export default function Landing({ onLaunch, onPrivacy, onTerms }: { onLaunch: ()
     { icon: 'device', title: t('f6t'), desc: t('f6d') },
     { icon: 'book', title: t('f7t'), desc: t('f7d') },
     { icon: 'lock', title: t('f8t'), desc: t('f8d') },
+    { icon: 'link', title: t('f9t'), desc: t('f9d') },
   ];
   const STEPS = [
     { n: '1', title: t('s1t'), desc: t('s1d') },
