@@ -177,9 +177,15 @@ export default function App() {
   type Screen = 'landing' | 'upload' | 'viewer' | 'shared' | 'privacy' | 'terms' | 'continue' | 'myrooms';
   const lastPushed = useRef<Screen>('landing');
   useEffect(() => {
-    window.history.replaceState({ screen: 'landing' }, '');
-    if (screen !== 'landing') window.history.pushState({ screen }, '');
-    lastPushed.current = screen;
+    // On a REFRESH the browser preserves the history stack + our {screen} state,
+    // so only seed the "landing underneath" on a genuinely fresh load. Re-seeding
+    // every refresh piled up duplicate entries and made Back appear stuck.
+    const savedScreen = (window.history.state as { screen?: Screen } | null)?.screen;
+    if (!savedScreen) {
+      window.history.replaceState({ screen: 'landing' }, '');
+      if (screen !== 'landing') window.history.pushState({ screen }, '');
+    }
+    lastPushed.current = ((window.history.state as { screen?: Screen } | null)?.screen) ?? screen;
     const onPop = (e: PopStateEvent) => {
       const s = (e.state?.screen as Screen) || 'landing';
       lastPushed.current = s;
