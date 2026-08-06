@@ -80,6 +80,7 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
   const [room, setRoom] = useState<ActiveRoom | null>(null);
   const [busy, setBusy] = useState(false);
   const [uploadProg, setUploadProg] = useState<{ d: number; t: number } | null>(null);
+  const [shotBusy, setShotBusy] = useState(false);
   const [err, setErr] = useState('');
 
   const [myName, setMyName] = useState(senders[senders.length - 1] || 'You');
@@ -293,6 +294,35 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
   const shareLink = room ? `${location.origin}/?room=${room.id}` : '';
   function copyLink() { navigator.clipboard?.writeText(`${shareLink}\nPIN: ${room?.pin}`).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1800); }); }
 
+  // Save the whole conversation as a PNG. The message list is a scroll box, so
+  // we briefly expand it to its full height, snapshot it, then restore.
+  async function screenshot() {
+    const el = bodyRef.current;
+    if (!el || shotBusy) return;
+    setShotBusy(true);
+    setMenuFor(null);
+    const prevH = el.style.height, prevMax = el.style.maxHeight, prevOv = el.style.overflowY, prevFlex = el.style.flex;
+    try {
+      const { default: html2canvas } = await import('html2canvas');
+      el.style.flex = 'none'; el.style.height = 'auto'; el.style.maxHeight = 'none'; el.style.overflowY = 'visible';
+      const canvas = await html2canvas(el, { backgroundColor: '#eae6df', scale: 2, useCORS: true, logging: false });
+      await new Promise<void>((res) => canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url; a.download = `chat-tree-${room?.otherName || 'chat'}-${Date.now()}.png`.replace(/\s+/g, '-');
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(url), 1500);
+        }
+        res();
+      }, 'image/png'));
+    } catch (e) { setErr((e as Error).message || String(e)); }
+    finally {
+      el.style.height = prevH; el.style.maxHeight = prevMax; el.style.overflowY = prevOv; el.style.flex = prevFlex;
+      setShotBusy(false);
+    }
+  }
+
   const lines: Line[] = room ? [
     ...room.history.filter((m) => !m.system && m.sender).map((m): Line => {
       const mine = m.sender === room.myName;
@@ -327,6 +357,8 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
         <span style={{ fontWeight: 800, color: '#128c7e', cursor: 'pointer' }} onClick={onHome}>💬 Chat Tree</span>
         {phase === 'chat' && room ? (
           <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button onClick={screenshot} disabled={shotBusy} title={t('ccScreenshot')} aria-label={t('ccScreenshot')}
+              style={{ background: 'none', border: 'none', cursor: shotBusy ? 'default' : 'pointer', fontSize: 19, padding: 2, lineHeight: 1, opacity: shotBusy ? 0.5 : 1 }}>{shotBusy ? '⏳' : '📸'}</button>
             <button onClick={() => call.start(false)} title={t('callVoice')} aria-label={t('callVoice')}
               style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 19, padding: 2, lineHeight: 1 }}>📞</button>
             <button onClick={() => call.start(true)} title={t('callVideo')} aria-label={t('callVideo')}

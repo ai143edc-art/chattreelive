@@ -208,6 +208,7 @@ const DICT = {
     ccPvDeleted: 'Deleted message', ccPvPhoto: '📷 Photo', ccPvVideo: '🎥 Video', ccPvVoice: '🎤 Voice message',
     ccErrPinShort: 'PIN must be at least 4 characters.', ccErrEnterPin: 'Enter the PIN.', ccErrWrongPin: 'Wrong PIN, or this chat no longer exists.',
     ccMicPerm: 'Allow microphone access to record a voice message.',
+    ccScreenshot: 'Save chat as image',
     // ---- Calls (WebRTC) ----
     callVoice: 'Voice call', callVideo: 'Video call',
     callCalling: 'Calling…', callRingingVoice: 'Incoming voice call', callRingingVideo: 'Incoming video call',
@@ -434,6 +435,7 @@ const DICT = {
     ccPvDeleted: 'डिलीट किया मैसेज', ccPvPhoto: '📷 फ़ोटो', ccPvVideo: '🎥 वीडियो', ccPvVoice: '🎤 वॉइस मैसेज',
     ccErrPinShort: 'PIN कम से कम 4 अक्षर का होना चाहिए।', ccErrEnterPin: 'PIN डालें।', ccErrWrongPin: 'गलत PIN, या यह चैट अब मौजूद नहीं है।',
     ccMicPerm: 'वॉइस मैसेज रिकॉर्ड करने के लिए माइक की अनुमति दें।',
+    ccScreenshot: 'चैट को इमेज के रूप में सेव करें',
     // ---- Calls (WebRTC) ----
     callVoice: 'वॉइस कॉल', callVideo: 'वीडियो कॉल',
     callCalling: 'कॉल हो रही…', callRingingVoice: 'वॉइस कॉल आ रही है', callRingingVideo: 'वीडियो कॉल आ रही है',
