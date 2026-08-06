@@ -11,8 +11,25 @@ import { sb } from './supabase';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { Side } from './rooms';
 
+// STUN just discovers your public address; when a direct peer-to-peer path
+// can't be made — e.g. the two people are on different mobile networks
+// (symmetric NAT / CGNAT) — the media must be RELAYED through a TURN server.
+// The free "Open Relay" TURN works out of the box; for better reliability set
+// your OWN (a free Metered account gives ~50 GB/mo) via these Vercel env vars:
+//   VITE_TURN_URL (comma-separated), VITE_TURN_USERNAME, VITE_TURN_CREDENTIAL
+const TURN_URL = import.meta.env.VITE_TURN_URL as string | undefined;
+const TURN_USER = import.meta.env.VITE_TURN_USERNAME as string | undefined;
+const TURN_CRED = import.meta.env.VITE_TURN_CREDENTIAL as string | undefined;
+
 const ICE_SERVERS: RTCIceServer[] = [
   { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
+  ...(TURN_URL && TURN_USER && TURN_CRED
+    ? [{ urls: TURN_URL.split(',').map((s) => s.trim()), username: TURN_USER, credential: TURN_CRED }]
+    : [
+      { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+      { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+      { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
+    ]),
 ];
 
 export type CallState = 'idle' | 'calling' | 'ringing' | 'connecting' | 'connected';
