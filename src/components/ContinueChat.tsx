@@ -9,6 +9,8 @@ import {
   uploadImportedMedia, setRoomHistory,
   type RoomMessage, type Reaction, type ReplyTo, type Side, type HistoryMessage,
 } from '../lib/rooms';
+import { useCall } from '../lib/webrtcCall';
+import CallOverlay from './CallOverlay';
 
 /**
  * "Continue Chat" — take an imported conversation and keep it going, live,
@@ -105,6 +107,7 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
   const chunksRef = useRef<Blob[]>([]);
   const cancelRef = useRef(false);
   const recTimer = useRef<number | undefined>(undefined);
+  const call = useCall(room?.id ?? null, room?.side ?? 'guest');
 
   useEffect(() => {
     if (phase !== 'chat' || !room) return;
@@ -319,9 +322,15 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
       <header style={{ position: 'sticky', top: 0, zIndex: 30, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 18px', background: '#fff', borderBottom: '1px solid #e6ebe9' }}>
         <span style={{ fontWeight: 800, color: '#128c7e', cursor: 'pointer' }} onClick={onHome}>💬 Chat Tree</span>
         {phase === 'chat' && room ? (
-          <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1.15 }}>
-            <b style={{ fontSize: 14, color: '#111b21' }}>{room.otherName}</b>
-            {statusText && <span style={{ fontSize: 12, color: otherOnline || otherTyping ? '#25904f' : '#54656f' }}>{statusText}</span>}
+          <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button onClick={() => call.start(false)} title={t('callVoice')} aria-label={t('callVoice')}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 19, padding: 2, lineHeight: 1 }}>📞</button>
+            <button onClick={() => call.start(true)} title={t('callVideo')} aria-label={t('callVideo')}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 19, padding: 2, lineHeight: 1 }}>📹</button>
+            <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1.15 }}>
+              <b style={{ fontSize: 14, color: '#111b21' }}>{room.otherName}</b>
+              {statusText && <span style={{ fontSize: 12, color: otherOnline || otherTyping ? '#25904f' : '#54656f' }}>{statusText}</span>}
+            </span>
           </span>
         ) : <span style={{ fontSize: 13, color: '#54656f' }}>{t('ccLiveTag')}</span>}
       </header>
@@ -491,6 +500,10 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
           )}
           {err && <div style={{ color: '#d3396d', padding: '4px 12px', fontSize: 13 }}>{err}</div>}
         </div>
+      )}
+
+      {(call.state !== 'idle' || call.ended) && (
+        <CallOverlay call={call} otherName={room?.otherName || ''} t={t} />
       )}
     </div>
   );

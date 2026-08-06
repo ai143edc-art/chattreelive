@@ -206,6 +206,13 @@ const DICT = {
     ccPvDeleted: 'Deleted message', ccPvPhoto: '📷 Photo', ccPvVideo: '🎥 Video', ccPvVoice: '🎤 Voice message',
     ccErrPinShort: 'PIN must be at least 4 characters.', ccErrEnterPin: 'Enter the PIN.', ccErrWrongPin: 'Wrong PIN, or this chat no longer exists.',
     ccMicPerm: 'Allow microphone access to record a voice message.',
+    // ---- Calls (WebRTC) ----
+    callVoice: 'Voice call', callVideo: 'Video call',
+    callCalling: 'Calling…', callRingingVoice: 'Incoming voice call', callRingingVideo: 'Incoming video call',
+    callConnecting: 'Connecting…', callAccept: 'Accept', callDecline: 'Decline', callEnd: 'End call',
+    callMute: 'Mute', callUnmute: 'Unmute', callCam: 'Camera',
+    callEncrypted: '🔒 End-to-end encrypted', callDeclined: 'Call declined', callEnded: 'Call ended',
+    callErrMedia: 'Allow microphone / camera access to call.', callFailed: "Couldn't connect the call.",
     // ---- My continue-chats ----
     mrHeaderTitle: 'My continue-chats', mrTitle: 'Your live chats 🔗',
     mrSub: 'Lost the link? Reopen a chat from here — and label, rename or delete it.',
@@ -423,6 +430,13 @@ const DICT = {
     ccPvDeleted: 'डिलीट किया मैसेज', ccPvPhoto: '📷 फ़ोटो', ccPvVideo: '🎥 वीडियो', ccPvVoice: '🎤 वॉइस मैसेज',
     ccErrPinShort: 'PIN कम से कम 4 अक्षर का होना चाहिए।', ccErrEnterPin: 'PIN डालें।', ccErrWrongPin: 'गलत PIN, या यह चैट अब मौजूद नहीं है।',
     ccMicPerm: 'वॉइस मैसेज रिकॉर्ड करने के लिए माइक की अनुमति दें।',
+    // ---- Calls (WebRTC) ----
+    callVoice: 'वॉइस कॉल', callVideo: 'वीडियो कॉल',
+    callCalling: 'कॉल हो रही…', callRingingVoice: 'वॉइस कॉल आ रही है', callRingingVideo: 'वीडियो कॉल आ रही है',
+    callConnecting: 'कनेक्ट हो रहा…', callAccept: 'उठाएँ', callDecline: 'अस्वीकारें', callEnd: 'कॉल खत्म करें',
+    callMute: 'म्यूट', callUnmute: 'अनम्यूट', callCam: 'कैमरा',
+    callEncrypted: '🔒 एंड-टू-एंड एन्क्रिप्टेड', callDeclined: 'कॉल अस्वीकार', callEnded: 'कॉल खत्म',
+    callErrMedia: 'कॉल के लिए माइक/कैमरा की अनुमति दें।', callFailed: 'कॉल कनेक्ट नहीं हो पाई।',
     // ---- My continue-chats ----
     mrHeaderTitle: 'मेरी जारी चैट', mrTitle: 'आपकी लाइव चैट 🔗',
     mrSub: 'लिंक खो गया? यहाँ से चैट दोबारा खोलें — और लेबल, नाम बदलें या डिलीट करें।',

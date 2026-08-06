@@ -25,7 +25,7 @@
     X-Frame-Options = "SAMEORIGIN"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "camera=(), microphone=(self), geolocation=()"
+    Permissions-Policy = "camera=(self), microphone=(self), geolocation=()"
     Strict-Transport-Security = "max-age=31536000; includeSubDomains"
     # If you self-host Plausible or change the CAPTCHA provider, update the
     # matching hosts below (script-src / frame-src / connect-src).
