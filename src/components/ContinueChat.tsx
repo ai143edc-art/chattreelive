@@ -83,6 +83,9 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
   const [err, setErr] = useState('');
 
   const [myName, setMyName] = useState(senders[senders.length - 1] || 'You');
+  // for a FRESH chat (no import) the creator types both names; for a 2-person
+  // import "their name" is derived, so this seeds from the other sender.
+  const [otherName, setOtherName] = useState(senders.find((s) => s !== (senders[senders.length - 1] || '')) || '');
   const [pin, setPin] = useState('');
   const [joinPin, setJoinPin] = useState('');
 
@@ -165,10 +168,11 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
     setErr('');
     if (!userEmail) { onLogin(); return; }
     if (pin.trim().length < 4) { setErr(t('ccErrPinShort')); return; }
-    const otherName = senders.find((s) => s !== myName) || 'Guest';
+    const myNm = myName.trim() || 'You';
+    const otherNm = (senders.length >= 2 ? senders.find((s) => s !== myNm) : otherName.trim()) || 'Guest';
     setBusy(true);
     try {
-      const id = await createRoom(pin.trim(), myName, otherName, importedMessages || []);
+      const id = await createRoom(pin.trim(), myNm, otherNm, importedMessages || []);
       // Upload the imported chat's photos/videos/docs into the room, so they show
       // (for both people, permanently) instead of just the filename text.
       let history: HistoryMessage[] = (importedMessages || []) as HistoryMessage[];
@@ -178,8 +182,8 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
         if (res.changed) await setRoomHistory(id, pin.trim(), history);
         setUploadProg(null);
       }
-      setRoom({ id, pin: pin.trim(), side: 'creator', myName, otherName, history });
-      rememberRoom({ id, pin: pin.trim(), myName, otherName, isCreator: true });
+      setRoom({ id, pin: pin.trim(), side: 'creator', myName: myNm, otherName: otherNm, history });
+      rememberRoom({ id, pin: pin.trim(), myName: myNm, otherName: otherNm, isCreator: true });
       setPhase('chat');
     } catch (e) { setErr((e as Error).message || String(e)); } finally { setBusy(false); }
   }
@@ -338,16 +342,29 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
       {phase === 'setup' && (
         <div style={wrap}>
           <h2 style={{ margin: '6px 0' }}>{t('ccSetupTitle')}</h2>
-          <p style={{ color: '#54656f', marginTop: 0 }}>{t('ccImportedMsgs').replace('{n}', String((importedMessages || []).length))}</p>
+          <p style={{ color: '#54656f', marginTop: 0 }}>{importedMessages && importedMessages.length
+            ? t('ccImportedMsgs').replace('{n}', String(importedMessages.length))
+            : t('ccFreshIntro')}</p>
           {!userEmail && (
             <div style={{ background: '#fff8e6', border: '1px solid #f2e2b6', borderRadius: 10, padding: 14, margin: '14px 0', color: '#6b5a2a' }}>
               {t('ccLoginPre')} <a role="button" style={{ color: '#128c7e', fontWeight: 700, cursor: 'pointer' }} onClick={onLogin}>{t('logIn')}</a> {t('ccLoginPost')}
             </div>
           )}
-          <label style={{ fontWeight: 600, fontSize: 14 }}>{t('ccWhichName')}</label>
-          <select style={{ ...input, margin: '6px 0 16px' }} value={myName} onChange={(e) => setMyName(e.target.value)}>
-            {(senders.length ? senders : ['You']).map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
+          {senders.length >= 2 ? (
+            <>
+              <label style={{ fontWeight: 600, fontSize: 14 }}>{t('ccWhichName')}</label>
+              <select style={{ ...input, margin: '6px 0 16px' }} value={myName} onChange={(e) => setMyName(e.target.value)}>
+                {senders.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </>
+          ) : (
+            <>
+              <label style={{ fontWeight: 600, fontSize: 14 }}>{t('ccYourName')}</label>
+              <input style={{ ...input, margin: '6px 0 12px' }} value={myName} onChange={(e) => setMyName(e.target.value)} placeholder={t('ccYourName')} />
+              <label style={{ fontWeight: 600, fontSize: 14 }}>{t('ccTheirName')}</label>
+              <input style={{ ...input, margin: '6px 0 16px' }} value={otherName} onChange={(e) => setOtherName(e.target.value)} placeholder={t('ccTheirName')} />
+            </>
+          )}
           <label style={{ fontWeight: 600, fontSize: 14 }}>{t('ccSetPin')}</label>
           <input style={{ ...input, margin: '6px 0 16px' }} value={pin} onChange={(e) => setPin(e.target.value)} placeholder={t('ccPinEg')} inputMode="numeric" />
           <button style={{ ...btn, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={doCreate}>

@@ -650,6 +650,7 @@ export default function App() {
             setContinueMode({ mode: 'create', messages: msgs, senders: [...set], media: l.mediaBlobs });
             setScreen('continue');
           }}
+          onContinueFresh={() => { setContinueMode({ mode: 'create', messages: [], senders: [], media: {} }); setScreen('continue'); }}
           onMyRooms={() => setScreen('myrooms')}
           userEmail={userEmail} onLogin={() => setAuthOpen(true)} onAccount={() => setAccountOpen(true)}
         />

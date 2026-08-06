@@ -12,6 +12,7 @@ export interface LoadedChat {
 interface Props {
   onLoaded: (l: LoadedChat) => void;
   onContinue: (l: LoadedChat) => void;
+  onContinueFresh: () => void;
   onMyRooms: () => void;
   onHistory: () => void;
   onBlank: () => void;
@@ -21,7 +22,7 @@ interface Props {
   onAccount: () => void;
 }
 
-export default function Uploader({ onLoaded, onContinue, onMyRooms, onHistory, onBlank, onHome, userEmail, onLogin, onAccount }: Props) {
+export default function Uploader({ onLoaded, onContinue, onContinueFresh, onMyRooms, onHistory, onBlank, onHome, userEmail, onLogin, onAccount }: Props) {
   const { t } = useLang();
   const inputRef = useRef<HTMLInputElement>(null);
   // which flow the file picker was opened for: normal view vs "continue chat"
@@ -133,7 +134,7 @@ export default function Uploader({ onLoaded, onContinue, onMyRooms, onHistory, o
             )}
           </div>
 
-          <button className="up-card blank" onClick={() => { if (!busy) { modeRef.current = 'continue'; inputRef.current?.click(); } }}>
+          <button className="up-card blank" onClick={() => { if (!busy) onContinueFresh(); }}>
             <span className="up-ic">🔗</span>
             <span className="up-ct">{t('upContinueTitle')}</span>
             <span className="up-cd">{t('upContinueDesc')}</span>
@@ -143,6 +144,7 @@ export default function Uploader({ onLoaded, onContinue, onMyRooms, onHistory, o
         <div className="up-foot">
           <button className="lp-cta ghost" onClick={onHistory}>{t('upOpenHistory')}</button>
           <button className="lp-cta ghost" onClick={onMyRooms}>{t('upMyRooms')}</button>
+          <button className="lp-cta ghost" onClick={() => { if (!busy) { modeRef.current = 'continue'; inputRef.current?.click(); } }}>{t('upContinueImport')}</button>
           <div className="up-note">
             {userEmail
               ? <>{t('upLoggedInAs')} <b>{userEmail}</b> · <a role="button" tabIndex={0} onClick={onAccount} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onAccount(); } }}>{t('upAccount')}</a></>
