@@ -94,7 +94,7 @@ export function useCall(roomId: string | null, mySide: Side): CallApi {
   const newPc = useCallback((): RTCPeerConnection => {
     const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
     pc.onicecandidate = (e) => { if (e.candidate) send({ kind: 'ice', candidate: e.candidate.toJSON() }); };
-    pc.ontrack = (e) => setRemoteStream(e.streams[0] ?? null);
+    pc.ontrack = (e) => setRemoteStream(e.streams[0] || new MediaStream([e.track]));
     pc.onconnectionstatechange = () => {
       const st = pc.connectionState;
       if (st === 'connected') { setState('connected'); startTimer(); }

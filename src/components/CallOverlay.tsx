@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback } from 'react';
 import type { CallApi } from '../lib/webrtcCall';
 import type { TKey } from '../lib/i18n';
 
@@ -11,11 +11,16 @@ function mmss(s: number): string {
 
 /** Full-screen call UI for Continue Chat — incoming/outgoing/in-call. */
 export default function CallOverlay({ call, otherName, t }: { call: CallApi; otherName: string; t: T }) {
-  const remoteRef = useRef<HTMLVideoElement>(null);
-  const localRef = useRef<HTMLVideoElement>(null);
-
-  useEffect(() => { if (remoteRef.current) remoteRef.current.srcObject = call.remoteStream; }, [call.remoteStream]);
-  useEffect(() => { if (localRef.current) localRef.current.srcObject = call.localStream; }, [call.localStream]);
+  // Callback refs: reliably (re)attach the MediaStream + start playback whenever
+  // the <video> node mounts. A plain effect missed the remount when the call
+  // went connecting -> connected, leaving the element with no srcObject (black
+  // video / no audio). These run on every mount, so the stream always attaches.
+  const attachRemote = useCallback((node: HTMLVideoElement | null) => {
+    if (node) { node.srcObject = call.remoteStream; void node.play?.().catch(() => {}); }
+  }, [call.remoteStream]);
+  const attachLocal = useCallback((node: HTMLVideoElement | null) => {
+    if (node) { node.srcObject = call.localStream; void node.play?.().catch(() => {}); }
+  }, [call.localStream]);
 
   const { state, isVideo, ended } = call;
   const showVideo = isVideo && state === 'connected';
@@ -60,15 +65,18 @@ export default function CallOverlay({ call, otherName, t }: { call: CallApi; oth
 
   return (
     <div style={overlay}>
-      {showVideo && (
-        <video ref={remoteRef} autoPlay playsInline
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', background: '#0b1013' }} />
+      {/* ONE remote <video> stays mounted for the whole call, so its stream never
+          detaches — audio always plays; it just fills the screen for a video call
+          and is a 1x1 invisible audio sink for a voice call. */}
+      {(state === 'connecting' || state === 'connected') && (
+        <video ref={attachRemote} autoPlay playsInline
+          style={showVideo
+            ? { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', background: '#0b1013' }
+            : { position: 'absolute', width: 1, height: 1, opacity: 0, pointerEvents: 'none' }} />
       )}
-      {/* remote audio always plays (a video element renders + plays the audio track even for a voice call) */}
-      {!showVideo && <video ref={remoteRef} autoPlay playsInline style={{ display: 'none' }} />}
 
       {showVideo && (
-        <video ref={localRef} autoPlay playsInline muted
+        <video ref={attachLocal} autoPlay playsInline muted
           style={{ position: 'absolute', top: 16, right: 16, width: 108, height: 150, objectFit: 'cover', borderRadius: 12, border: '2px solid #ffffff55', zIndex: 2, background: '#000' }} />
       )}
 
