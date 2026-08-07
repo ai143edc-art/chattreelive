@@ -10,7 +10,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   senders: string[];
-  dates: string[];            // unique chat dates, in chronological order
+  dates: string[];
   dateOrder: DateOrder;
   value: ChatFilter;
   onChange: (f: ChatFilter) => void;
@@ -19,7 +19,6 @@ interface Props {
   totalCount: number;
 }
 
-/** Filter the chat view by sender, date range, or media-only — without altering the data. */
 export default function FilterModal({ open, onClose, senders, dates, dateOrder, value, onChange, onClear, visibleCount, totalCount }: Props) {
   useModal(open, onClose);
   const { t } = useLang();

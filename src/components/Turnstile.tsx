@@ -1,10 +1,5 @@
 import { useEffect, useRef } from 'react';
 
-/**
- * Cloudflare Turnstile CAPTCHA — only renders when VITE_TURNSTILE_SITE_KEY is set.
- * When unconfigured it renders nothing and never blocks auth, so the app works
- * out of the box; enable it by adding the env var + turning on captcha in Supabase.
- */
 const SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 const SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
 
@@ -33,7 +28,6 @@ function loadScript(): Promise<void> {
 
 export const captchaEnabled = !!SITE_KEY;
 
-/** Renders the widget and reports the solved token (or '' when reset/expired). */
 export default function Turnstile({ onToken }: { onToken: (token: string) => void }) {
   const boxRef = useRef<HTMLDivElement>(null);
   const idRef = useRef<string | null>(null);
@@ -49,11 +43,11 @@ export default function Turnstile({ onToken }: { onToken: (token: string) => voi
         'expired-callback': () => onToken(''),
         'error-callback': () => onToken(''),
       });
-    }).catch(() => { /* network issue — leave auth usable */ });
+    }).catch(() => {  });
     return () => {
       cancelled = true;
       if (idRef.current && window.turnstile) {
-        try { window.turnstile.remove(idRef.current); } catch { /* ignore */ }
+        try { window.turnstile.remove(idRef.current); } catch {  }
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -1,11 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Session } from '@supabase/supabase-js';
 
-// The anon key is public by design — all access is enforced by Row Level
-// Security, so it is safe to ship in the client. Env vars take precedence when
-// set (to point at another project or rotate the key); otherwise we fall back
-// to the known public project so the site never white-screens if the hosting
-// environment hasn't been configured with the vars.
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
   || 'https://clwvevblnkghewrkkplw.supabase.co';
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -34,7 +29,7 @@ export interface ChatRow {
   avatar?: string | null;
   share_token?: string | null;
   shared_media?: Record<string, string>;
-  share_expires_at?: string | null;   // null = never expires
+  share_expires_at?: string | null;
   category?: string | null;
   created_at?: string;
 }
@@ -45,7 +40,7 @@ export interface SaveMeta {
 
 export function uuidv4(): string {
   const c = window.crypto as Crypto | undefined;
-  if (c && 'randomUUID' in c) { try { return c.randomUUID(); } catch { /* fall through */ } }
+  if (c && 'randomUUID' in c) { try { return c.randomUUID(); } catch {  } }
   const b = new Uint8Array(16);
   if (c && c.getRandomValues) c.getRandomValues(b);
   else for (let i = 0; i < 16; i++) b[i] = Math.floor(Math.random() * 256);
@@ -54,11 +49,8 @@ export function uuidv4(): string {
   return `${h[0]}${h[1]}${h[2]}${h[3]}-${h[4]}${h[5]}-${h[6]}${h[7]}-${h[8]}${h[9]}-${h[10]}${h[11]}${h[12]}${h[13]}${h[14]}${h[15]}`;
 }
 
-/* ---------------- Auth ---------------- */
 export function signUp(email: string, password: string, captchaToken?: string) {
-  // Send the confirmation link back to THIS site (not Supabase's default Site URL,
-  // which starts life as http://localhost:3000). The URL must also be whitelisted
-  // in Supabase → Auth → URL Configuration → Redirect URLs for this to take effect.
+
   return sb.auth.signUp({
     email, password,
     options: { emailRedirectTo: window.location.origin, ...(captchaToken ? { captchaToken } : {}) },
@@ -74,8 +66,7 @@ export function signInWithGoogle() {
   });
 }
 export function signOut() { return sb.auth.signOut(); }
-/** Send a password-reset email. The link returns the user to the app with a
- *  recovery session, which onPasswordRecovery() below picks up. */
+
 export async function resetPassword(email: string, captchaToken?: string): Promise<void> {
   const { error } = await sb.auth.resetPasswordForEmail(email, {
     redirectTo: location.origin,
@@ -87,8 +78,7 @@ export async function changePassword(newPassword: string): Promise<void> {
   const { error } = await sb.auth.updateUser({ password: newPassword });
   if (error) throw error;
 }
-/** Fires when the user arrives via a password-reset link, so the UI can prompt
- *  for a new password. Returns an unsubscribe function. */
+
 export function onPasswordRecovery(cb: () => void): () => void {
   const { data: { subscription } } = sb.auth.onAuthStateChange((event) => {
     if (event === 'PASSWORD_RECOVERY') cb();
@@ -116,19 +106,8 @@ export function onAuthChange(cb: (session: Session | null) => void): () => void 
   return () => subscription.unsubscribe();
 }
 
-/* ---------------- Per-user chats ---------------- */
 export interface SaveResult { failed: number; total: number }
 
-/**
- * The content type to declare on upload, from the file's extension.
- *
- * This matters more than it looks: media pulled out of a WhatsApp .zip comes
- * back from JSZip as a Blob with an empty `type`, and when no content type is
- * given, supabase-js defaults it to `text/plain`. The user-media bucket only
- * accepts image/video/audio/pdf, so a text/plain upload is rejected — which is
- * exactly why saved chats were coming back with every photo missing. Naming the
- * real type keeps the bucket happy without touching the file's bytes.
- */
 const MIME_BY_EXT: Record<string, string> = {
   jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif',
   webp: 'image/webp', bmp: 'image/bmp', heic: 'image/heic',
@@ -139,20 +118,12 @@ const MIME_BY_EXT: Record<string, string> = {
   pdf: 'application/pdf',
 };
 function contentTypeFor(name: string, blobType: string): string {
-  // A concrete image/video/audio/pdf type from the blob is trusted as-is; a
-  // missing or generic one is replaced from the extension so it isn't dropped.
+
   if (blobType && blobType !== 'application/octet-stream' && blobType !== 'text/plain') return blobType;
   const ext = (name.match(/\.([a-z0-9]+)$/i) || [])[1]?.toLowerCase() || '';
   return MIME_BY_EXT[ext] || blobType || 'application/octet-stream';
 }
 
-/**
- * Uploading the media used to be a `for` loop that awaited each file, so a chat
- * with a few hundred photos took minutes and any file that hit a transient
- * error was silently skipped — which is why some reopened chats came back with
- * missing images. Now the uploads run several at a time with a retry, and the
- * blobs are sent untouched, so nothing is recompressed and quality is preserved.
- */
 export async function saveChat(
   meta: SaveMeta,
   mediaBlobs: Record<string, Blob>,
@@ -170,19 +141,16 @@ export async function saveChat(
     const blob = mediaBlobs[fname];
     const safe = fname.replace(/[^a-z0-9._-]+/gi, '_');
     const path = `${user.id}/${id}/${safe}`;
-    // One retry: most failures at this scale are transient (a dropped request
-    // in a burst), and a second attempt usually lands.
+
     const contentType = contentTypeFor(fname, blob.type);
     for (let attempt = 0; attempt < 2; attempt++) {
       const up = await sb.storage.from('user-media').upload(path, blob, { upsert: true, contentType });
-      if (!up.error) { cloudMap[fname] = path; break; }   // store the PATH; sign on load
+      if (!up.error) { cloudMap[fname] = path; break; }
       if (attempt === 1) { failed.push(fname); console.warn('media upload failed:', fname, up.error); }
     }
     onProgress?.(++done, files.length);
   };
 
-  // A small pool of workers pulling from the queue — fast, but bounded so we
-  // never open hundreds of sockets at once.
   const CONCURRENCY = 6;
   let next = 0;
   const worker = async () => { while (next < files.length) await uploadOne(files[next++]); };
@@ -214,19 +182,18 @@ export async function getChat(id: string): Promise<ChatRow | null> {
   return row;
 }
 
-/** Turn stored storage-paths into short-lived signed URLs (private bucket). */
 async function signMediaMap(map: Record<string, string>): Promise<Record<string, string>> {
   const entries = Object.entries(map);
   if (!entries.length) return {};
   const out: Record<string, string> = {};
   const toSign: { fname: string; path: string }[] = [];
   for (const [fname, val] of entries) {
-    if (/^https?:\/\//i.test(val)) out[fname] = val;      // legacy public URL — keep as-is
+    if (/^https?:\/\//i.test(val)) out[fname] = val;
     else toSign.push({ fname, path: val });
   }
   if (toSign.length) {
     const { data, error } = await sb.storage.from('user-media')
-      .createSignedUrls(toSign.map((t) => t.path), 3600);  // valid 1 hour
+      .createSignedUrls(toSign.map((t) => t.path), 3600);
     if (error) throw error;
     (data || []).forEach((d, i) => {
       if (d.signedUrl && !d.error) out[toSign[i].fname] = d.signedUrl;
@@ -244,12 +211,6 @@ export async function updateCategory(id: string, category: string | null): Promi
 }
 export interface ShareResult { url: string; expiresAt: string | null }
 
-/**
- * Make a chat shareable. `ttlSeconds` sets how long the link stays valid
- * (0 = never expires). Media signed URLs are minted for the same window, so
- * photos die with the link. Re-calling with a different TTL keeps the same
- * token — the link doesn't change, only its expiry does.
- */
 export async function shareChat(id: string, ttlSeconds = 0): Promise<ShareResult> {
   const { data, error } = await sb.from('user_chats').select('media_map, share_token').eq('id', id).single();
   if (error) throw error;

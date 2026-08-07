@@ -12,20 +12,13 @@ import {
 import { useCall } from '../lib/webrtcCall';
 import CallOverlay from './CallOverlay';
 
-/**
- * "Continue Chat" — take an imported conversation and keep it going, live,
- * with the other person. Creator imports + sets a PIN → gets a link. The other
- * person opens the link, enters the PIN, and both chat in real time.
- * WhatsApp-style: reactions, reply, delete-for-everyone, typing, voice + any file.
- * NOTE: experiment — not end-to-end encrypted.
- */
 interface Props {
   mode: 'create' | 'join';
   importedMessages?: Message[];
   importedSenders?: string[];
-  importedMedia?: Record<string, Blob>;   // media blobs from the imported .zip
+  importedMedia?: Record<string, Blob>;
   roomId?: string;
-  autoPin?: string;            // when reopening from a saved room: skip the PIN prompt
+  autoPin?: string;
   userEmail: string | null;
   onLogin: () => void;
   onHome: () => void;
@@ -84,8 +77,7 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
   const [err, setErr] = useState('');
 
   const [myName, setMyName] = useState(senders[senders.length - 1] || 'You');
-  // for a FRESH chat (no import) the creator types both names; for a 2-person
-  // import "their name" is derived, so this seeds from the other sender.
+
   const [otherName, setOtherName] = useState(senders.find((s) => s !== (senders[senders.length - 1] || '')) || '');
   const [pin, setPin] = useState('');
   const [joinPin, setJoinPin] = useState('');
@@ -105,7 +97,7 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
   const bodyRef = useRef<HTMLDivElement>(null);
   const typingApi = useRef<{ notify: () => void; unsub: () => void } | null>(null);
   const typingClear = useRef<number | undefined>(undefined);
-  const maxReadRef = useRef(0);              // highest message id I've seen
+  const maxReadRef = useRef(0);
   const syncRef = useRef<() => void>(() => {});
   const recRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -116,7 +108,7 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
   useEffect(() => {
     if (phase !== 'chat' || !room) return;
     let alive = true;
-    // upsert by id — inserts append, reaction/delete UPDATEs replace in place.
+
     const merge = (prev: RoomMessage[], m: RoomMessage) => {
       const i = prev.findIndex((x) => x.id === m.id);
       if (i === -1) return [...prev, m].sort((a, b) => (a.id || 0) - (b.id || 0));
@@ -133,7 +125,6 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
     });
     typingApi.current = tp;
 
-    // heartbeat: report my "seen now" + read mark, learn the other's → online/last-seen + blue ticks
     const sync = () => {
       if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
       roomSync(room.id, room.pin, room.side, maxReadRef.current)
@@ -155,7 +146,6 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
 
   useEffect(() => { if (bodyRef.current) bodyRef.current.scrollTop = bodyRef.current.scrollHeight; }, [live, phase, otherTyping]);
 
-  // when new messages arrive and I'm looking, advance my read mark + report it (drives the other's blue ticks)
   useEffect(() => {
     if (phase !== 'chat') return;
     const maxId = live.reduce((m, x) => Math.max(m, x.id || 0), 0);
@@ -174,8 +164,7 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
     setBusy(true);
     try {
       const id = await createRoom(pin.trim(), myNm, otherNm, importedMessages || []);
-      // Upload the imported chat's photos/videos/docs into the room, so they show
-      // (for both people, permanently) instead of just the filename text.
+
       let history: HistoryMessage[] = (importedMessages || []) as HistoryMessage[];
       if (importedMedia && Object.keys(importedMedia).length) {
         const res = await uploadImportedMedia(id, importedMessages || [], importedMedia, (d, t) => setUploadProg({ d, t }));
@@ -207,15 +196,11 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
     } catch (e) { setErr((e as Error).message || String(e)); } finally { setBusy(false); }
   }
 
-  // reopening from a saved room → auto-join with the stored PIN, no prompt
   useEffect(() => {
     if (mode === 'join' && autoPin && phase === 'join' && !room) doJoin(autoPin);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Reflect the active room in the URL (?room=<id>) so a page refresh drops you
-  // right back into THIS chat (the saved PIN auto-rejoins) instead of the
-  // landing/join screen — matters for the creator, whose URL has no ?room= yet.
   useEffect(() => {
     if (phase !== 'chat' || !room) return;
     const u = new URL(window.location.href);
@@ -259,7 +244,6 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
 
   function doReply(l: Line) { setReplyTo({ name: l.name, text: previewOf(l, t) }); setMenuFor(null); }
 
-  // ---- voice message (record → send) ----
   async function startRec() {
     if (recording || sendingMedia) return;
     setErr(''); setMenuFor(null);
@@ -288,14 +272,12 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
     if (!mr) return;
     cancelRef.current = cancel;
     recRef.current = null; setRecording(false);
-    try { mr.stop(); } catch { /* already stopped */ }
+    try { mr.stop(); } catch {  }
   }
 
   const shareLink = room ? `${location.origin}/?room=${room.id}` : '';
   function copyLink() { navigator.clipboard?.writeText(`${shareLink}\nPIN: ${room?.pin}`).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1800); }); }
 
-  // Save the whole conversation as a PNG. The message list is a scroll box, so
-  // we briefly expand it to its full height, snapshot it, then restore.
   async function screenshot() {
     const el = bodyRef.current;
     if (!el || shotBusy) return;
@@ -327,9 +309,9 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
     ...room.history.filter((m) => !m.system && m.sender).map((m): Line => {
       const mine = m.sender === room.myName;
       const att = findAttachment(m.text);
-      // imported media that we uploaded → render the real photo/video/doc
+
       if (m.mediaUrl) return { name: m.sender!, text: att ? extractCaption(m.text, att) : m.text, time: m.time, mine, mediaUrl: m.mediaUrl, mediaType: m.mediaType, mediaName: m.mediaName };
-      // referenced a file we didn't get (or "image omitted") → show a WhatsApp-style label
+
       if (att) { const cap = extractCaption(m.text, att); return { name: m.sender!, text: `${mediaLabel(att.split('.').pop() || '')}${cap ? `  ${cap}` : ''}`, time: m.time, mine }; }
       if (PLACEHOLDERS.test(m.text)) return { name: m.sender!, text: placeholderLabel(m.text), time: m.time, mine };
       return { name: m.sender!, text: m.text, time: m.time, mine };
@@ -409,8 +391,7 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
       {phase === 'join' && (
         <div style={wrap}>
           {autoPin && !err ? (
-            // reopening a saved room → show a loader, not the PIN form, so a
-            // refresh doesn't flash "enter PIN" before it auto-rejoins.
+
             <div style={{ textAlign: 'center', padding: '44px 0', color: '#54656f' }}>
               <span className="spinner" style={{ margin: '0 auto 14px' }} />
               <p style={{ margin: 0 }}>{t('ccReopening')}</p>

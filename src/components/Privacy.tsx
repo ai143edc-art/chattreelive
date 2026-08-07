@@ -1,8 +1,4 @@
-/**
- * Privacy Policy page. Reachable at /?privacy and linked from the landing footer.
- * Replace CONTACT_EMAIL with your real support address once you have your domain.
- */
-const CONTACT_EMAIL = 'vikkuedc143@gmail.com'; // TODO: swap for a dedicated support address if you get one
+const CONTACT_EMAIL = 'vikkuedc143@gmail.com';
 const BRAND = 'Chat Tree';
 const UPDATED = 'July 2026';
 

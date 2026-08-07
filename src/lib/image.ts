@@ -1,4 +1,3 @@
-/** Read an image File, resize (keep aspect), and return a JPEG data URL — for wallpapers. */
 export function fileToDataUrl(file: File, maxW = 900): Promise<string> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
@@ -18,7 +17,6 @@ export function fileToDataUrl(file: File, maxW = 900): Promise<string> {
   });
 }
 
-/** Read an image File, center-crop to a square, resize, and return a small JPEG data URL. */
 export function fileToAvatar(file: File, size = 160): Promise<string> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
@@ -29,7 +27,7 @@ export function fileToAvatar(file: File, size = 160): Promise<string> {
       canvas.width = size; canvas.height = size;
       const ctx = canvas.getContext('2d');
       if (!ctx) { reject(new Error('Canvas not supported')); return; }
-      const s = Math.min(img.width, img.height);       // cover-crop to square
+      const s = Math.min(img.width, img.height);
       const sx = (img.width - s) / 2, sy = (img.height - s) / 2;
       ctx.drawImage(img, sx, sy, s, s, 0, 0, size, size);
       resolve(canvas.toDataURL('image/jpeg', 0.85));

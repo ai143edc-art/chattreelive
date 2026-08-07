@@ -1,6 +1,5 @@
 import { useLang } from '../lib/i18n';
 
-/** Small EN / हिं pill that switches the app language and persists the choice. */
 export default function LangToggle({ className = '' }: { className?: string }) {
   const { lang, setLang } = useLang();
   return (

@@ -1,6 +1,6 @@
 export interface PhoneModel { name: string; w: number; h: number; }
 
-export interface Wallpaper { name: string; css: string; } // css='' => use theme default
+export interface Wallpaper { name: string; css: string; }
 export const WALLPAPERS: Wallpaper[] = [
   { name: 'Default', css: '' },
   { name: 'Cream', css: '#efeae2' },

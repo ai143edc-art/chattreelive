@@ -1,22 +1,8 @@
-// Secure 1:1 voice/video calling for Continue Chat, over WebRTC.
-//
-// SECURITY: the actual audio/video is peer-to-peer and encrypted end-to-end by
-// WebRTC itself (mandatory DTLS-SRTP) — it never passes through our server. Only
-// the tiny "signaling" messages (SDP offer/answer + ICE candidates, i.e. how to
-// connect — NOT the media) go through the room's Supabase Realtime broadcast
-// channel, which is scoped to the unguessable room id. STUN (Google's public
-// servers) is used only to discover network routes; no media flows through it.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { sb } from './supabase';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { Side } from './rooms';
 
-// STUN just discovers your public address; when a direct peer-to-peer path
-// can't be made — e.g. the two people are on different mobile networks
-// (symmetric NAT / CGNAT) — the media must be RELAYED through a TURN server.
-// The free "Open Relay" TURN works out of the box; for better reliability set
-// your OWN (a free Metered account gives ~50 GB/mo) via these Vercel env vars:
-//   VITE_TURN_URL (comma-separated), VITE_TURN_USERNAME, VITE_TURN_CREDENTIAL
 const TURN_URL = import.meta.env.VITE_TURN_URL as string | undefined;
 const TURN_USER = import.meta.env.VITE_TURN_USERNAME as string | undefined;
 const TURN_CRED = import.meta.env.VITE_TURN_CREDENTIAL as string | undefined;
@@ -45,8 +31,8 @@ export interface CallApi {
   isVideo: boolean;
   muted: boolean;
   camOff: boolean;
-  ended: CallEnd;          // brief reason shown right after a call closes
-  seconds: number;         // connected duration
+  ended: CallEnd;
+  seconds: number;
   localStream: MediaStream | null;
   remoteStream: MediaStream | null;
   start: (video: boolean) => void;
@@ -57,7 +43,6 @@ export interface CallApi {
   toggleCam: () => void;
 }
 
-/** 1:1 WebRTC call bound to a room. Pass roomId=null while there's no active room. */
 export function useCall(roomId: string | null, mySide: Side): CallApi {
   const [state, setState] = useState<CallState>('idle');
   const [isVideo, setIsVideo] = useState(false);
@@ -90,8 +75,8 @@ export function useCall(roomId: string | null, mySide: Side): CallApi {
 
   const cleanup = useCallback((reason: CallEnd) => {
     if (timerRef.current) { window.clearInterval(timerRef.current); timerRef.current = undefined; }
-    try { pcRef.current?.getSenders().forEach((s) => { try { s.track?.stop(); } catch { /* ignore */ } }); } catch { /* ignore */ }
-    try { pcRef.current?.close(); } catch { /* ignore */ }
+    try { pcRef.current?.getSenders().forEach((s) => { try { s.track?.stop(); } catch {  } }); } catch {  }
+    try { pcRef.current?.close(); } catch {  }
     pcRef.current = null;
     localRef.current?.getTracks().forEach((t) => t.stop());
     localRef.current = null;
@@ -104,7 +89,7 @@ export function useCall(roomId: string | null, mySide: Side): CallApi {
   }, []);
 
   const flushIce = useCallback(async () => {
-    for (const c of pendingIce.current) { try { await pcRef.current?.addIceCandidate(c); } catch { /* ignore */ } }
+    for (const c of pendingIce.current) { try { await pcRef.current?.addIceCandidate(c); } catch {  } }
     pendingIce.current = [];
   }, []);
 
@@ -131,7 +116,7 @@ export function useCall(roomId: string | null, mySide: Side): CallApi {
     if (sig.from === mySide) return;
     switch (sig.kind) {
       case 'invite':
-        if (stateRef.current !== 'idle') { send({ kind: 'reject' }); return; }   // busy
+        if (stateRef.current !== 'idle') { send({ kind: 'reject' }); return; }
         incomingOffer.current = sig.sdp ?? null;
         setIsVideo(!!sig.video);
         setState('ringing');
@@ -145,7 +130,7 @@ export function useCall(roomId: string | null, mySide: Side): CallApi {
         break;
       case 'ice':
         if (sig.candidate) {
-          if (remoteReady.current && pcRef.current) { try { await pcRef.current.addIceCandidate(sig.candidate); } catch { /* ignore */ } }
+          if (remoteReady.current && pcRef.current) { try { await pcRef.current.addIceCandidate(sig.candidate); } catch {  } }
           else pendingIce.current.push(sig.candidate);
         }
         break;
@@ -157,7 +142,6 @@ export function useCall(roomId: string | null, mySide: Side): CallApi {
     }
   }, [mySide, send, flushIce, cleanup]);
 
-  // subscribe to the room's call signaling channel
   useEffect(() => {
     if (!roomId) return;
     const ch = sb.channel(`call-${roomId}`, { config: { broadcast: { self: false } } });
@@ -166,7 +150,6 @@ export function useCall(roomId: string | null, mySide: Side): CallApi {
     return () => { sb.removeChannel(ch); chanRef.current = null; };
   }, [roomId, handleSignal]);
 
-  // stop everything if the component using this unmounts mid-call
   useEffect(() => () => cleanup(''), [cleanup]);
 
   const start = useCallback((video: boolean) => {

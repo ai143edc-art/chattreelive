@@ -15,7 +15,6 @@ interface Props {
   toast: (msg: string, ms?: number) => void;
 }
 
-/** How long a share link stays alive. 0 = never expires. */
 const TTLS: { seconds: number; label: TKey }[] = [
   { seconds: 0, label: 'shareTtlNever' },
   { seconds: 300, label: 'shareTtl5m' },
@@ -25,8 +24,6 @@ const TTLS: { seconds: number; label: TKey }[] = [
   { seconds: 604800, label: 'shareTtl7d' },
 ];
 
-/** Share sheet for a saved chat: pick how long the link lives, then hand out a
- *  downloadable QR card with the chat's profile (avatar + name). */
 export default function ShareModal({ open, chatId, title, avatar, onClose, toast }: Props) {
   const { t } = useLang();
   const [ttl, setTtl] = useState(0);
@@ -37,10 +34,8 @@ export default function ShareModal({ open, chatId, title, avatar, onClose, toast
   const cardRef = useRef<HTMLDivElement>(null);
   const name = title || 'Chat';
 
-  // A freshly opened sheet always starts at the default expiry.
   useEffect(() => { if (open) setTtl(0); }, [open, chatId]);
 
-  // Create (or re-stamp) the link whenever the chosen expiry changes.
   useEffect(() => {
     if (!open || !chatId) { setUrl(''); return; }
     let alive = true;
@@ -56,10 +51,7 @@ export default function ShareModal({ open, chatId, title, avatar, onClose, toast
   useEffect(() => {
     if (!url) { setQr(''); return; }
     let alive = true;
-    // Tuned so phone cameras lock on instantly: a full 4-module quiet zone
-    // (the QR spec's requirement), low EC so the modules stay large, near-black
-    // on white for maximum contrast, and a 3x source so the 240px render is crisp.
-    // Loaded on demand — the encoder only matters once someone opens Share.
+
     import('qrcode')
       .then(({ default: QRCode }) => QRCode.toDataURL(url, {
         width: 720, margin: 4, errorCorrectionLevel: 'L',

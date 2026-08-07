@@ -10,10 +10,6 @@ interface Props {
 
 const MIN_PW = 8;
 
-/** Shown after the user follows a password-reset link (a PASSWORD_RECOVERY
- *  session is already active), so they can pick a new password. */
-// Deliberately not Escape-dismissable: the user arrived from a recovery link
-// and closing this leaves them signed in with a password they cannot use.
 export default function ResetPasswordModal({ open, onDone, toast }: Props) {
   const { t, lang } = useLang();
   const [pw, setPw] = useState('');

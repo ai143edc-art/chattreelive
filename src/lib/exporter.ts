@@ -1,9 +1,3 @@
-/**
- * A small, semi-transparent "chattreeapp.fun" chip in the bottom-right corner.
- * Drawn onto the finished canvas (not the DOM), so it never shifts the layout
- * and rides along on whatever a user shares — a light touch of free marketing.
- * Sized relative to the image so it stays subtle on both tiny and tall exports.
- */
 function stampWatermark(canvas: HTMLCanvasElement): void {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
@@ -11,8 +5,7 @@ function stampWatermark(canvas: HTMLCanvasElement): void {
   const fs = Math.min(30, Math.max(15, Math.round(W * 0.024)));
   const text = 'chattreeapp.fun';
   ctx.save();
-  // html2canvas leaves a scale/translate on the context; reset to device pixels
-  // so the chip lands at the real bottom-right corner instead of off-screen.
+
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.globalAlpha = 1;
   ctx.shadowColor = 'transparent';
@@ -30,7 +23,7 @@ function stampWatermark(canvas: HTMLCanvasElement): void {
   ctx.arcTo(x, y + chipH, x, y, r);
   ctx.arcTo(x, y, x + chipW, y, r);
   ctx.closePath();
-  ctx.fillStyle = 'rgba(17,27,33,0.5)';       // WhatsApp-ink tone, translucent
+  ctx.fillStyle = 'rgba(17,27,33,0.5)';
   ctx.fill();
   ctx.fillStyle = 'rgba(255,255,255,0.95)';
   ctx.textAlign = 'left';
@@ -38,7 +31,6 @@ function stampWatermark(canvas: HTMLCanvasElement): void {
   ctx.restore();
 }
 
-/** Capture the whole chat (header + all messages) and download as PNG or PDF. */
 export async function exportChat(mode: 'png' | 'pdf', filename: string): Promise<void> {
   const screen = document.querySelector('.screen') as HTMLElement | null;
   const phone = document.querySelector('.phone') as HTMLElement | null;
@@ -47,7 +39,6 @@ export async function exportChat(mode: 'png' | 'pdf', filename: string): Promise
 
   const html2canvas = (await import('html2canvas')).default;
 
-  // temporarily remove the phone scaling and expand the chat to its full height
   const prev = {
     transform: phone.style.transform,
     screenH: screen.style.height,

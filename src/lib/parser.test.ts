@@ -4,14 +4,6 @@ import {
   mediaLabel, placeholderLabel, PLACEHOLDERS, emojiInfo, shortTime, initial,
 } from './parser';
 
-/**
- * The parser is the one thing every other feature reads through — the viewer,
- * the PDF, the book. These cover the formats real WhatsApp exports come in
- * (Android and iOS, 12h and 24h, DMY and MDY) and the cases that have actually
- * bitten: a 13+ day proving the date order, a colon inside a message body, and
- * a multi-line message continuing onto the next line.
- */
-
 describe('parseChat', () => {
   it('reads the Android export format', () => {
     const [m] = parseChat('12/06/2026, 09:00 - Riya: Kal milte hai?');
@@ -74,7 +66,7 @@ describe('formatDay', () => {
   });
 
   it('hands back anything it cannot make sense of', () => {
-    expect(formatDay('06/13/2026', 'DMY')).toBe('06/13/2026');   // month 13
+    expect(formatDay('06/13/2026', 'DMY')).toBe('06/13/2026');
     expect(formatDay('not a date', 'DMY')).toBe('not a date');
   });
 });

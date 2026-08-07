@@ -18,7 +18,6 @@ export default function TranslateModal({ open, onClose, onTranslateChat, transla
   const [from, setFrom] = useState<FromLang>('auto');
   const [to, setTo] = useState<Lang2>('en');
 
-  // quick one-off translator
   const [qText, setQText] = useState('');
   const [qFrom, setQFrom] = useState<FromLang>('auto');
   const [qTo, setQTo] = useState<Lang2>('hi');

@@ -33,9 +33,7 @@ html,body,#root{height:100%;}
 body{
   margin:0;
   font-family:'Segoe UI',Helvetica,Arial,sans-serif;
-  /* A lit teal room rather than a flat fill: a deep base, two soft brand
-     glows and a warm one for depth, so the space the phone sits in reads as
-     designed instead of empty. All painted — no images. */
+
   background:
     radial-gradient(52rem 40rem at 82% -8%, rgba(37,211,102,.16), transparent 60%),
     radial-gradient(46rem 38rem at 10% 4%, rgba(20,140,126,.20), transparent 62%),
@@ -45,8 +43,7 @@ body{
   color:var(--wa-txt);
   min-height:100vh;
 }
-/* A faint large-scale weave over the whole backdrop — barely there, just
-   enough that the field has texture close up. */
+
 body::before{
   content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.6;
   background-image:
@@ -58,7 +55,6 @@ body::before{
 }
 #root{position:relative;z-index:1;}
 
-/* ---------- Top toolbar ---------- */
 .toolbar{
   background:var(--wa-green);color:#fff;padding:8px 16px;
   display:flex;flex-direction:column;gap:10px;
@@ -73,7 +69,7 @@ body::before{
   font-size:17px;line-height:1;cursor:pointer;color:#075e54;font-weight:700;
   box-shadow:0 1px 2px rgba(0,0,0,.15);}
 .swap-btn:hover{background:#e7f7f2;}
-/* ---------- Click-to-edit mode ---------- */
+
 .row.editmode .editable-live{outline:none;cursor:text;border-bottom:1px dashed var(--wa-teal);
   min-width:14px;display:inline-block;}
 .row.editmode .bubble.editing{box-shadow:0 0 0 2px var(--wa-teal);}
@@ -83,7 +79,7 @@ body::before{
 .del-x:hover{opacity:1;transform:scale(1.12);}
 .row.editmode.out .del-x{order:2;margin-left:2px;}
 .row.editmode.in .del-x{order:-1;margin-right:2px;}
-/* small WhatsApp-style message context menu */
+
 .msg-menu{background:#fff;border-radius:12px;min-width:170px;box-shadow:0 10px 34px rgba(0,0,0,.35);
   padding:5px 0;margin-top:32vh;animation:apIn .14s ease;height:fit-content;}
 .mm-item{padding:12px 20px;font-size:14.5px;cursor:pointer;color:#111b21;white-space:nowrap;}
@@ -94,7 +90,6 @@ body::before{
 .status-ctrl input{flex:1;min-width:0;}
 .row.editable{touch-action:manipulation;}
 
-/* ---------- MiniSelect: compact custom dropdown ---------- */
 .mini-sel{position:relative;min-width:0;}
 .ms-btn{width:100%;border:none;border-radius:8px;padding:8px 10px;font-size:13px;background:#fff;color:#111;
   display:flex;justify-content:space-between;align-items:center;gap:6px;cursor:pointer;text-align:left;}
@@ -130,7 +125,6 @@ body::before{
 }
 .btn:hover{background:#ffffff33;}
 
-/* ---------- Upload / entry screen (premium) ---------- */
 .up-screen{min-height:100vh;background:linear-gradient(135deg,#0a3d36 0%,#075e54 48%,#128c7e 100%);
   display:flex;flex-direction:column;}
 .up-nav{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;}
@@ -164,10 +158,9 @@ body::before{
 .hint{font-size:12px;color:#888;margin-top:18px;line-height:1.6;text-align:left;background:#f7f7f7;border-radius:10px;padding:14px 16px;}
 .hint b{color:#333;}
 
-/* ---------- Phone frame ---------- */
 .stage{position:relative;display:flex;flex-direction:column;align-items:center;padding:34px 12px 64px;}
 .phoneWrap{position:relative;flex:0 0 auto;}
-/* the shadow the phone casts on the surface, so it reads as placed, not floating */
+
 .phoneWrap::after{
   content:'';position:absolute;left:50%;bottom:-26px;transform:translateX(-50%);
   width:74%;height:38px;border-radius:50%;pointer-events:none;
@@ -184,7 +177,6 @@ body::before{
 .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:46%;height:22px;background:#000;border-radius:0 0 16px 16px;z-index:20;}
 .phone.plain .notch{display:none;}
 
-/* ---------- WhatsApp header ---------- */
 .wa-head{background:var(--wa-header);color:var(--wa-headtx);display:flex;align-items:center;gap:10px;padding:9px 12px;flex:0 0 auto;}
 .wa-head .back{display:flex;align-items:center;}
 .wa-head .back svg{width:24px;height:24px;fill:var(--wa-headtx);}
@@ -197,7 +189,6 @@ body::before{
 .wa-head .icons svg{width:22px;height:22px;fill:var(--wa-headtx);}
 .wa-head .icons .dots svg{width:20px;height:20px;}
 
-/* ---------- Chat body ---------- */
 .wa-body{flex:1;overflow-y:auto;padding:12px 8px 16px;background-color:var(--wa-bg);display:flex;flex-direction:column;gap:2px;}
 .screen.light .wa-body{
   background-color:#efeae2;
@@ -260,13 +251,12 @@ body::before{
 
 .empty-note{color:#fff;text-align:center;padding:40px;font-size:14px;}
 
-/* Cloud history overlay */
 .hist{position:fixed;inset:0;background:#000000cc;display:none;z-index:120;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;}
 .hist.show{display:flex;}
 .hist-box{background:#fff;border-radius:14px;max-width:520px;width:100%;padding:22px;position:relative;box-shadow:0 12px 40px rgba(0,0,0,.4);}
 .hist-box h3{margin:0 0 14px;color:var(--wa-green-dark);}
 .hist-box .x{position:absolute;top:10px;right:16px;font-size:28px;color:#888;cursor:pointer;line-height:1;}
-/* app-styled confirm/alert/prompt (see lib/dialog.tsx) */
+
 .dlg-overlay{align-items:center;z-index:400;}
 .dlg-box{max-width:400px;padding:24px 22px 20px;animation:dlgPop .16s ease-out;}
 @keyframes dlgPop{from{transform:scale(.94);opacity:0;}to{transform:scale(1);opacity:1;}}
@@ -297,7 +287,6 @@ body::before{
 .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#111b21;color:#fff;padding:12px 20px;border-radius:24px;font-size:14px;z-index:200;box-shadow:0 6px 20px rgba(0,0,0,.35);display:none;max-width:90%;text-align:center;}
 .toast.show{display:block;}
 
-/* ---------- Auth screen (login / signup) ---------- */
 .auth-overlay{position:fixed;inset:0;z-index:130;display:none;align-items:center;justify-content:center;padding:20px;
   background:linear-gradient(135deg,#0a3d36 0%,#075e54 50%,#128c7e 100%);}
 .auth-overlay.show{display:flex;}
@@ -343,13 +332,11 @@ body::before{
 .lp-link:hover{text-decoration:underline;}
 .lp-nav-right{display:flex;align-items:center;gap:10px;}
 
-/* ---------- Language toggle ---------- */
 .lang-toggle{display:inline-flex;border:1px solid #d5dbda;border-radius:999px;overflow:hidden;background:#fff;}
 .lang-toggle button{border:none;background:transparent;padding:5px 11px;font-size:13px;font-weight:700;color:#667781;cursor:pointer;line-height:1;transition:.15s;}
 .lang-toggle button.on{background:#128c7e;color:#fff;}
 .auth-top{position:absolute;top:14px;left:14px;}
 
-/* ---------- Legal / privacy page ---------- */
 .legal{min-height:100dvh;background:#f4f7f6;padding:32px 16px;overflow-y:auto;}
 .legal-box{max-width:760px;margin:0 auto;background:#fff;border-radius:16px;padding:34px 30px;
   box-shadow:0 10px 30px rgba(0,0,0,.06);color:#1f2c34;line-height:1.6;}
@@ -364,7 +351,6 @@ body::before{
 .legal-back:hover{text-decoration:underline;}
 .legal-back.btm{margin-top:28px;border-top:1px solid #eef1f2;padding-top:18px;width:100%;text-align:left;}
 
-/* ---------- Stats modal ---------- */
 .stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:4px;}
 .stat-card{background:#f4f7f6;border-radius:12px;padding:14px 8px;text-align:center;}
 .stat-card .num{font-size:21px;font-weight:800;color:var(--wa-green-dark);line-height:1.1;}
@@ -378,7 +364,6 @@ body::before{
 .stat-bar>i{display:block;height:100%;background:linear-gradient(90deg,#25d366,#128c7e);}
 .stat-foot{margin-top:16px;font-size:12.5px;color:#667781;border-top:1px solid #eef1f2;padding-top:12px;line-height:1.7;}
 
-/* ---------- Header three-dot dropdown menu ---------- */
 .dots-menu{position:absolute;top:66px;right:10px;z-index:30;background:var(--wa-in);
   border-radius:10px;box-shadow:0 6px 22px rgba(0,0,0,.3);padding:6px 0;min-width:170px;
   animation:apIn .14s ease;}
@@ -387,7 +372,6 @@ body::before{
 .dm-item:hover{background:rgba(0,0,0,.06);}
 .screen.dark .dm-item:hover{background:rgba(255,255,255,.06);}
 
-/* WhatsApp-style bottom bar (doubles as chat search) */
 .wa-compose{display:flex;align-items:center;gap:8px;padding:6px 8px 8px;background:transparent;flex:0 0 auto;}
 .wa-input{flex:1;display:flex;align-items:center;gap:9px;background:var(--wa-in);border-radius:24px;
   padding:9px 13px;box-shadow:0 1px 1px rgba(0,0,0,.12);min-width:0;}
@@ -401,7 +385,7 @@ body::before{
   cursor:pointer;flex:0 0 auto;display:flex;align-items:center;justify-content:center;
   box-shadow:0 1px 3px rgba(0,0,0,.25);}
 .wc-btn svg{width:22px;height:22px;fill:#fff;}
-/* floating match-count chip above the bar */
+
 .wc-float{position:absolute;right:12px;bottom:66px;z-index:17;display:flex;align-items:center;gap:5px;
   background:#fff;color:#111b21;font-size:12px;font-weight:600;padding:6px 10px;border-radius:16px;
   box-shadow:0 2px 8px rgba(0,0,0,.3);}
@@ -413,7 +397,6 @@ body::before{
 .screen.dark .wc-float.filt{background:#128c7e;color:#fff;}
 .wc-float.filt .wc-clear{color:#d7f3ec;}
 
-/* ---------- Media gallery ---------- */
 .gal{position:fixed;inset:0;background:#000000cc;display:none;z-index:130;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;}
 .gal.show{display:flex;}
 .gal-box{background:#fff;border-radius:14px;max-width:760px;width:100%;padding:22px;position:relative;box-shadow:0 12px 40px rgba(0,0,0,.4);}
@@ -428,7 +411,6 @@ body::before{
 .gal-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;text-shadow:0 1px 6px rgba(0,0,0,.6);pointer-events:none;}
 .gal-empty{color:#667781;text-align:center;padding:30px 0;}
 
-/* ---------- Filter modal ---------- */
 .flt-box{max-width:420px;}
 .flt-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:12px 0;}
 .flt-lbl{font-size:14px;font-weight:600;color:#3b4a54;}
@@ -440,7 +422,6 @@ body::before{
 .flt-clear{flex:1;padding:11px;border:1px solid #dfe4e3;background:#fff;border-radius:11px;font-weight:600;color:#e5484d;cursor:pointer;}
 .flt-done{flex:1;padding:11px;border:none;border-radius:11px;font-weight:700;color:#fff;background:linear-gradient(135deg,#25d366,#128c7e);cursor:pointer;}
 
-/* ---------- Translate modal ---------- */
 .wc-float.trd{background:#2aa86b;color:#fff;}
 .screen.dark .wc-float.trd{background:#2aa86b;color:#fff;}
 .wc-float.trd .wc-clear{color:#d7f3ec;font-weight:700;}
@@ -461,7 +442,6 @@ body::before{
 .tr-out{display:flex;align-items:flex-start;gap:10px;justify-content:space-between;background:#f0f7f4;border:1px solid #cdeadd;border-radius:10px;padding:11px 12px;margin-top:10px;font-size:15px;color:#111b21;line-height:1.45;}
 .tr-copy{border:none;background:#128c7e;color:#fff;border-radius:8px;padding:5px 9px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;}
 
-/* ---------- Save (category) modal ---------- */
 .sv-box{max-width:400px;}
 .sv-sub{font-size:13.5px;color:#667781;margin:2px 0 14px;}
 .sv-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
@@ -473,13 +453,11 @@ body::before{
 .sv-save{flex:1;padding:11px;border:none;border-radius:11px;font-weight:700;color:#fff;background:linear-gradient(135deg,#25d366,#128c7e);cursor:pointer;}
 .sv-skip:disabled,.sv-save:disabled{opacity:.6;cursor:default;}
 
-/* ---------- History categories ---------- */
 .hist-cats{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;}
 .hc-chip{border:1px solid #dfe4e3;background:#fff;border-radius:999px;padding:5px 11px;font-size:12.5px;font-weight:600;color:#3b4a54;cursor:pointer;}
 .hc-chip.on{background:#128c7e;border-color:#128c7e;color:#fff;}
 .hi-cat{display:inline-block;margin-left:8px;font-size:11px;font-weight:600;color:#128c7e;background:#e7f4ef;border-radius:6px;padding:1px 7px;vertical-align:middle;}
 
-/* phone status bar (clock / signal / wifi / battery) */
 .sys-bar{display:flex;align-items:center;justify-content:space-between;background:var(--wa-header);
   color:var(--wa-headtx);padding:7px 15px 3px;font-size:13.5px;font-weight:700;flex:0 0 auto;letter-spacing:.2px;}
 .sys-time{font-variant-numeric:tabular-nums;}
@@ -489,21 +467,20 @@ body::before{
 .sys-batt::after{content:"";position:absolute;right:-3px;top:3px;width:2px;height:6px;background:var(--wa-headtx);border-radius:0 1px 1px 0;}
 .sys-batt>i{display:block;height:100%;background:var(--wa-headtx);border-radius:1px;}
 .sys-pct{font-size:12.5px;font-weight:700;margin-left:1px;}
-/* per-message ticks */
+
 .tick.gray{color:var(--wa-sub);}
 .tick-edit{cursor:pointer;padding:0 1px;}
 .bubble.media .tick.gray{color:#e0e0e0;}
-/* add-message composer side toggle */
+
 .side-toggle{flex:0 0 auto;background:var(--wa-in);border:none;border-radius:20px;padding:0 11px;height:40px;
   font-size:12px;font-weight:600;color:var(--wa-txt);cursor:pointer;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,.15);}
-/* editable time / date in edit mode */
+
 .time-edit{cursor:pointer;border-bottom:1px dashed currentColor;}
 .editable-day{cursor:pointer;box-shadow:0 0 0 1.5px var(--wa-teal);}
 .wp-ctrl{display:flex;gap:6px;align-items:stretch;}
 .wp-ctrl .mini-sel{flex:1;min-width:0;}
 .wp-ctrl .mini-btn{flex:0 0 auto;}
 
-/* reply / quoted message block */
 .reply-quote{background:rgba(0,0,0,.05);border-left:3px solid var(--wa-teal);border-radius:5px;
   padding:4px 8px;margin-bottom:4px;max-width:100%;overflow:hidden;}
 .screen.dark .reply-quote{background:rgba(255,255,255,.08);}
@@ -511,12 +488,12 @@ body::before{
 .rq-name{font-size:12.5px;font-weight:600;color:var(--wa-teal);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .row.out .rq-name{color:#06cf9c;}
 .rq-text{font-size:13px;color:var(--wa-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-/* reactions pill on bubble */
+
 .bubble.has-react{margin-bottom:10px;}
 .reactions{position:absolute;bottom:-11px;right:8px;background:var(--wa-in);border-radius:12px;
   padding:1px 6px;font-size:12px;box-shadow:0 1px 3px rgba(0,0,0,.25);white-space:nowrap;}
 .screen.dark .reactions{background:#2a3942;}
-/* per-message edit tools (reply / react / delete) */
+
 .msg-tools{display:flex;align-items:center;gap:1px;flex:0 0 auto;}
 .row.editmode.out .msg-tools{order:2;margin-left:2px;}
 .row.editmode.in .msg-tools{order:-1;margin-right:2px;}
@@ -528,28 +505,27 @@ body::before{
 .screen.dark .react-pop{background:#233138;}
 .react-pop span{cursor:pointer;font-size:19px;transition:.1s;}
 .react-pop span:hover{transform:scale(1.25);}
-/* typing indicator bubble */
+
 .typing-bubble{display:flex;gap:4px;align-items:center;padding:11px 12px!important;}
 .typing-bubble .td{width:7px;height:7px;border-radius:50%;background:var(--wa-sub);animation:typing 1.2s infinite;}
 .typing-bubble .td:nth-child(2){animation-delay:.2s;}
 .typing-bubble .td:nth-child(3){animation-delay:.4s;}
 @keyframes typing{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
-/* edit-mode composer with reply preview */
+
 .compose-col{flex-direction:column;align-items:stretch;gap:6px;}
 .compose-row{display:flex;align-items:center;gap:8px;}
 .reply-preview{display:flex;align-items:center;gap:8px;background:var(--wa-in);border-radius:8px;padding:6px 10px;
   border-left:3px solid var(--wa-teal);}
 .rp-body{flex:1;min-width:0;}
 .rp-x{cursor:pointer;color:var(--wa-sub);font-size:15px;flex:0 0 auto;}
-/* group chat: per-sender avatar circle */
+
 .grp-ava{width:27px;height:27px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;
   color:#fff;font-size:12.5px;font-weight:700;align-self:flex-end;margin:0 5px 2px 0;overflow:hidden;}
 .grp-ava.sp{background:transparent!important;}
 .grp-ava img{width:100%;height:100%;object-fit:cover;}
 
-/* forwarded label */
 .fwd-label{font-size:12.5px;color:var(--wa-sub);font-style:italic;margin-bottom:2px;display:flex;align-items:center;gap:3px;}
-/* call-log bubble */
+
 .bubble.call .call-row{display:flex;align-items:center;gap:11px;min-width:150px;}
 .call-ic{width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,.08);display:flex;align-items:center;
   justify-content:center;font-size:18px;flex:0 0 auto;}
@@ -558,13 +534,12 @@ body::before{
 .call-txt{display:flex;flex-direction:column;}
 .call-title{font-size:14.5px;font-weight:600;color:var(--wa-txt);}
 .call-sub{font-size:12.5px;color:var(--wa-sub);}
-/* insert-special menu */
+
 .ins-wrap{position:relative;flex:0 0 auto;}
 .ins-menu{position:absolute;bottom:120%;left:0;z-index:30;background:var(--wa-in);border-radius:10px;
   box-shadow:0 6px 22px rgba(0,0,0,.32);padding:5px 0;min-width:210px;animation:apIn .14s ease;}
 .screen.dark .ins-menu{background:#233138;}
 
-/* WhatsApp-style attachment popup (holds all actions) */
 .ap-overlay{position:absolute;inset:0;z-index:28;background:rgba(0,0,0,.08);}
 .attach-pop{position:absolute;left:10px;right:10px;bottom:68px;z-index:30;background:var(--wa-in);
   border-radius:18px;padding:20px 8px 14px;display:grid;grid-template-columns:repeat(3,1fr);gap:18px 4px;
@@ -577,7 +552,6 @@ body::before{
 .ap-circle{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;
   font-size:24px;color:#fff;box-shadow:0 2px 7px rgba(0,0,0,.22);transition:.12s;}
 
-/* ---------- In-chat search ---------- */
 .search-wrap{position:relative;display:flex;align-items:center;}
 .search-wrap input{width:100%;padding-right:78px;}
 .search-nav{position:absolute;right:6px;display:flex;align-items:center;gap:2px;font-size:11px;color:#667781;}
@@ -587,7 +561,6 @@ body::before{
 .row.hl .bubble{box-shadow:0 0 0 2px rgba(245,158,11,.55);}
 .row.hla .bubble{box-shadow:0 0 0 3px #f59e0b;}
 
-/* header avatar image */
 .wa-head .ava img{width:100%;height:100%;object-fit:cover;}
 .avatar-ctrl{display:flex;gap:6px;}
 .mini-btn{background:#fff;color:#111;border:none;border-radius:6px;padding:7px 10px;font-size:13px;
@@ -599,7 +572,6 @@ body::before{
 .acc-del{background:#ffe9e9;color:#c0143c;}
 .acc-del:hover{background:#ffdada;}
 
-/* shared read-only view bar */
 .shared-bar{position:sticky;top:0;z-index:50;background:var(--wa-green);color:#fff;
   display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;
   box-shadow:0 2px 6px rgba(0,0,0,.2);}
@@ -607,9 +579,6 @@ body::before{
 .shared-bar .sb-open{color:#fff;font-weight:600;text-decoration:none;font-size:14px;white-space:nowrap;}
 .shared-bar .sb-open:hover{text-decoration:underline;}
 
-/* ============================ Landing page ============================ */
-/* The hero art leans past its column on purpose; clip (not hidden) so the
-   sticky nav keeps working. */
 .lp{background:#fff;color:#111b21;min-height:100vh;font-size:16px;line-height:1.6;overflow-x:clip;}
 .lp h1,.lp h2,.lp h3{line-height:1.2;margin:0;}
 .lp-nav{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;
@@ -621,8 +590,6 @@ body::before{
 .lp-cta.sm{padding:9px 18px;font-size:14px;box-shadow:none;}
 .lp-cta.ghost{background:#fff;color:#128c7e;border:2px solid #128c7e;box-shadow:none;}
 
-/* Ambient field: soft brand light, a hairline grid and a little grain, so the
-   page has air behind it instead of flat white. All painted, no images. */
 .lp::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   background:
     radial-gradient(46rem 30rem at 78% -6%,rgba(37,211,102,.16),transparent 62%),
@@ -650,11 +617,8 @@ body::before{
 .lp-actions{display:flex;gap:12px;flex-wrap:wrap;}
 .lp-trust{margin-top:20px;color:#667781;font-size:14px;}
 
-/* ---- Hero scene: the chat, and the book it becomes ---- */
 .lp-hero-art{flex:1 1 400px;display:flex;justify-content:center;}
-/* The stage keeps one intrinsic size and is scaled down on small screens. If we
-   shrank the phone instead, its bubbles would rewrap, it would grow taller than
-   the scene, and it would climb over the hero text. */
+
 .lp-scene{position:relative;width:min(470px,100%);height:calc(416px * var(--s,1));
   perspective:1500px;perspective-origin:50% 42%;}
 .lp-stage{position:absolute;top:0;left:50%;width:470px;height:416px;margin-left:-235px;
@@ -665,10 +629,6 @@ body::before{
   background:radial-gradient(38% 60% at 24% 50%,rgba(6,35,30,.30),transparent 70%),
     radial-gradient(36% 62% at 79% 46%,rgba(6,60,54,.26),transparent 70%);filter:blur(6px);}
 
-/* A real box: front cover, spine and page block are separate faces in 3D, each
-   translated out to its own half-depth so the covers meet the spine at the edge. */
-/* The book sits left of centre, so we see it from its right — which is exactly
-   the side that shows the page block. The phone, sitting right, shows its left. */
 .lp-book{--w:232px;--h:320px;--d:36px;
   position:absolute;left:-4%;top:9%;width:var(--w);height:var(--h);transform-style:preserve-3d;
   transform:rotateY(-25deg) rotateZ(-1.5deg) translateZ(-30px);animation:lp-float 9s ease-in-out infinite;}
@@ -677,18 +637,16 @@ body::before{
   box-shadow:0 42px 60px -26px rgba(6,35,30,.62),0 4px 14px rgba(0,0,0,.22);}
 .lp-bk-spine{position:absolute;top:0;left:50%;height:100%;width:var(--d);margin-left:calc(var(--d) / -2);
   transform:translateX(calc(var(--w) / -2)) rotateY(-90deg);border-radius:2px 0 0 2px;}
-/* Pages are inset from the boards — the covers protect them. The block is
-   foreshortened to a few pixels here, so it is a graded cream, not stripes:
-   at this angle a repeating gradient aliases into dashes. */
+
 .lp-bk-edge{position:absolute;top:5px;bottom:5px;left:50%;width:var(--d);margin-left:calc(var(--d) / -2);
   transform:translateX(calc(var(--w) / 2 - 2px)) rotateY(90deg);
   background:linear-gradient(90deg,#cec4ae,#f4f0e6 26%,#efe9db 62%,#c9bea6);}
 .lp-bk-weave,.lp-bk-vig{position:absolute;inset:0;}
 .lp-bk-weave{background-size:5px 5px;}
-/* one raking highlight, so the cloth reads as a surface and not a swatch */
+
 .lp-bk-face::before{content:'';position:absolute;inset:0;z-index:2;pointer-events:none;
   background:linear-gradient(114deg,rgba(255,255,255,.13) 0 16%,rgba(255,255,255,.03) 34%,transparent 56%);}
-/* the hinge where the cover folds over the binding */
+
 .lp-bk-face::after{content:'';position:absolute;left:0;top:0;bottom:0;width:34px;pointer-events:none;
   background:linear-gradient(90deg,rgba(0,0,0,.34),rgba(0,0,0,.10) 62%,rgba(255,255,255,.05) 88%,transparent);}
 .lp-bk-fr{position:absolute;inset:15px 15px 15px 30px;border:1.1px solid;opacity:.5;}
@@ -705,7 +663,7 @@ body::before{
   border-radius:26px;padding:11px 11px 14px;transform:rotateY(12deg) rotateZ(2.5deg) translateZ(74px);
   box-shadow:0 40px 70px -22px rgba(6,60,54,.55),0 6px 16px rgba(0,0,0,.18);
   animation:lp-float 9s ease-in-out infinite reverse;}
-/* glass over the whole device, and a speaker slot in the bezel */
+
 .lp-phone::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
   background:linear-gradient(118deg,rgba(255,255,255,.18) 0 14%,rgba(255,255,255,.04) 30%,transparent 52%);}
 .lp-phone::before{content:'';position:absolute;top:5px;left:50%;transform:translateX(-50%);
@@ -734,7 +692,7 @@ body::before{
 .lp-card{position:relative;background:#ffffffd9;border:1px solid #e8eeec;border-radius:18px;padding:24px 22px;
   backdrop-filter:blur(6px);box-shadow:0 1px 2px rgba(11,20,26,.04);
   transition:transform .22s cubic-bezier(.2,.7,.2,1),box-shadow .22s,border-color .22s;}
-/* a sheen along the top edge, brighter on hover — the card catches light */
+
 .lp-card::before{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
   background:linear-gradient(160deg,rgba(255,255,255,.9),transparent 42%);opacity:.7;}
 .lp-card:hover{transform:translateY(-5px);border-color:#c9e7d8;
@@ -749,7 +707,6 @@ body::before{
 .lp-card h3{font-size:18px;margin-bottom:7px;}
 .lp-card p{color:#54656f;font-size:14.5px;margin:0;}
 
-/* sections arrive rather than appear */
 .lp-reveal{opacity:0;transform:translateY(14px);transition:opacity .5s ease-out,transform .5s cubic-bezier(.2,.7,.2,1);}
 .lp-reveal.in{opacity:1;transform:none;}
 @media (prefers-reduced-motion:reduce){
@@ -759,7 +716,7 @@ body::before{
 .lp-steps-sec{position:relative;background:linear-gradient(180deg,#f4f9f7,#fbfdfc);max-width:none;
   border-top:1px solid #eaf2ee;border-bottom:1px solid #eaf2ee;}
 .lp-steps{position:relative;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:22px;max-width:1080px;margin:0 auto;}
-/* a thread running through the three numbers, on wide screens only */
+
 .lp-steps::before{content:'';position:absolute;left:16%;right:16%;top:34px;height:2px;
   background:repeating-linear-gradient(90deg,#bfe3d3 0 7px,transparent 7px 14px);}
 .lp-step{position:relative;text-align:center;padding:10px;}
@@ -771,8 +728,7 @@ body::before{
 .lp-step h3{font-size:19px;margin-bottom:6px;}
 .lp-step p{color:#54656f;font-size:15px;margin:0;}
 @media (max-width:760px){ .lp-steps::before{display:none;} }
-/* Keepsake band. The render carries its own colour, so it is matted like a
-   print rather than bled into the page — a photograph is allowed to be blue. */
+
 .lp-keep{display:flex;align-items:center;gap:clamp(28px,5vw,56px);flex-wrap:wrap;}
 .lp-keep-art{flex:1 1 340px;max-width:520px;padding:10px;background:#fff;
   border:1px solid #e8eeec;border-radius:20px;
@@ -818,9 +774,7 @@ body::before{
   .toolbar h1{font-size:15px;}
   .toolbar .logo{font-size:18px;}
   .panel{gap:8px;}
-  /* narrow phones: lay the controls out as a wrapping grid so labels never
-     overlap or get clipped (was a single non-wrapping flex row). grid makes
-     the children's inline flex:0 0 auto irrelevant, so everything sizes evenly. */
+
   .settings-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:10px 8px;align-items:end;}
   .settings-row .ctrl{min-width:0;}
   .settings-row .swap-btn{justify-self:center;align-self:end;}
@@ -834,27 +788,23 @@ body::before{
   .drop{padding:32px 18px;}
 }
 
-/* ============ Loading spinners & progress ============ */
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes barSlide{0%{left:-40%}100%{left:100%}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 
-/* ring spinner */
 .spinner{display:inline-block;width:22px;height:22px;border-radius:50%;
   border:3px solid rgba(0,128,105,.22);border-top-color:var(--wa-green);
   animation:spin .7s linear infinite;flex:none;}
 .spinner.sm{width:16px;height:16px;border-width:2px;}
 .spinner.lg{width:40px;height:40px;border-width:4px;}
-/* white spinner for coloured buttons */
+
 .spinner.btn{width:17px;height:17px;border-width:2px;
   border-color:rgba(255,255,255,.4);border-top-color:#fff;}
 
-/* centred loading block (lists, cards) */
 .load-block{display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:12px;padding:34px 10px;color:var(--wa-sub);animation:fadeIn .2s ease;}
 .load-block .lb-text{font-size:13.5px;color:var(--wa-sub);}
 
-/* full-screen loader (shared link / boot) */
 .load-full{position:fixed;inset:0;z-index:200;display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:16px;
   background:linear-gradient(135deg,#0a3d36 0%,#075e54 48%,#128c7e 100%);color:#fff;}
@@ -862,14 +812,12 @@ body::before{
 .load-full .lf-brand{font-size:20px;font-weight:800;letter-spacing:.3px;}
 .load-full .lf-text{font-size:13px;opacity:.85;}
 
-/* thin top progress bar (indeterminate) */
 .topbar-load{position:fixed;top:0;left:0;right:0;height:3px;z-index:300;
   background:rgba(0,128,105,.14);overflow:hidden;}
 .topbar-load::before{content:"";position:absolute;top:0;height:100%;width:40%;
   background:linear-gradient(90deg,transparent,var(--wa-green),#25d366,transparent);
   animation:barSlide 1s ease-in-out infinite;}
 
-/* uploader busy overlay */
 .up-busy{position:absolute;inset:0;background:rgba(255,255,255,.86);border-radius:inherit;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
   z-index:5;animation:fadeIn .15s ease;}
@@ -878,12 +826,11 @@ body::before{
 .hist-item.opening{opacity:.6;pointer-events:none;}
 .hist-item.opening .spinner{align-self:center;}
 
-/* ---------------- Book Studio ---------------- */
 .bk-box{max-width:760px;width:calc(100vw - 28px);max-height:92vh;overflow-y:auto;text-align:left;}
 .bk-grid{display:grid;grid-template-columns:236px 1fr;gap:22px;margin-top:8px;}
 @media(max-width:640px){.bk-grid{grid-template-columns:1fr;}}
 .bk-preview-cap{text-align:center;font-size:11px;color:#8696a0;margin-top:9px;letter-spacing:.6px;text-transform:uppercase;}
-/* Cover = a piece of bookcloth with foil-stamped type. */
+
 .bk-cover{position:relative;aspect-ratio:210/297;border-radius:3px 8px 8px 3px;overflow:hidden;
   box-shadow:0 10px 26px rgba(0,0,0,.3);}
 .bk-weave{position:absolute;inset:0;background-size:3px 3px;}
@@ -938,7 +885,7 @@ body::before{
 .bk-export{padding:10px 22px;border:none;border-radius:10px;background:#128c7e;color:#fff;font-weight:700;cursor:pointer;font-size:14px;}
 .bk-export:disabled,.bk-cancel:disabled{opacity:.6;cursor:default;}
 .bk-hint{margin:6px 2px 0;font-size:11.5px;line-height:1.5;color:#8696a0;}
-/* export progress — a long book is minutes of work, so show it moving */
+
 .bk-prog{margin-top:16px;}
 .bk-prog-bar{height:6px;border-radius:4px;background:#e6ebea;overflow:hidden;}
 .bk-prog-bar span{display:block;height:100%;background:#128c7e;border-radius:4px;
@@ -946,8 +893,7 @@ body::before{
 .bk-prog-txt{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-top:7px;
   font-size:12px;color:#54656f;}
 .bk-prog-note{color:#8696a0;font-size:11px;text-align:right;}
-/* live inside-page preview — page furniture on paper, chat on a mounted plate.
-   Percentages mirror the exporter's px geometry so every page size stays true. */
+
 .bk-inside{position:relative;width:100%;border-radius:9px;overflow:hidden;margin-top:14px;color:#111b21;
   box-shadow:0 6px 18px rgba(0,0,0,.16);}
 .bk-gutter{position:absolute;left:0;top:0;bottom:0;width:7.3%;pointer-events:none;
@@ -1002,7 +948,6 @@ body::before{
 .bk-ph-ic{opacity:.85;}
 .bk-ph-body{flex:1;overflow:hidden;padding:6px 5px;}
 
-/* ---------------- Share (QR) ---------------- */
 .sh-box{max-width:420px;width:calc(100vw - 32px);text-align:center;}
 .sh-ttl-label{font-size:11.5px;font-weight:700;color:#111b21;text-transform:uppercase;
   letter-spacing:.5px;margin-top:10px;text-align:left;}

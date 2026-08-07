@@ -1,8 +1,4 @@
-/**
- * Terms of Use page. Reachable at /?terms and linked from the landing footer.
- * Update CONTACT_EMAIL / governing-law line to match your real details.
- */
-const CONTACT_EMAIL = 'vikkuedc143@gmail.com'; // TODO: swap for a dedicated support address if you get one
+const CONTACT_EMAIL = 'vikkuedc143@gmail.com';
 const BRAND = 'Chat Tree';
 const UPDATED = 'July 2026';
 

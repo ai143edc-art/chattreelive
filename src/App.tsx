@@ -41,9 +41,6 @@ import { useLang } from './lib/i18n';
 
 const DEFAULT_MODEL = MODELS.find((m) => m.name.startsWith('iPhone 12')) || MODELS[3];
 
-// Restore the editor draft on a refresh — computed once at load. Explicit URL
-// entry points (privacy / terms / shared ?c= / room ?room=) take precedence, so
-// we only rehydrate the local editor when the URL isn't pointing somewhere else.
 const BOOT_DRAFT = (() => {
   try {
     const p = new URLSearchParams(location.search);
@@ -60,8 +57,8 @@ export default function App() {
       if (p.has('privacy')) return 'privacy';
       if (p.has('terms')) return 'terms';
       if (p.has('room')) return 'continue';
-      if (p.has('c')) return 'landing';          // a shared chat loads via its own effect
-      // refresh / reopen → land back on the same page as last time
+      if (p.has('c')) return 'landing';
+
       if (BOOT_DRAFT) return 'viewer';
       const ls = loadScreen();
       if (ls === 'upload') return 'upload';
@@ -69,15 +66,13 @@ export default function App() {
       return 'landing';
     },
   );
-  // "Continue chat" live-room mode: either the creator (with an imported chat)
-  // or a guest arriving via a ?room=<id> link (autoPin = reopen a saved room).
+
   const [continueMode, setContinueMode] = useState<
     { mode: 'create'; messages: P.Message[]; senders: string[]; media: Record<string, Blob> } | { mode: 'join'; roomId: string; autoPin?: string } | null
   >(() => {
     const id = new URLSearchParams(location.search).get('room');
     if (!id) return null;
-    // If we've been in this room before, reopen it straight away with the saved
-    // PIN (no prompt) — so a refresh lands back in the chat, not the join screen.
+
     const saved = recentRooms().find((r) => r.id === id);
     return { mode: 'join', roomId: id, autoPin: saved?.pin };
   });
@@ -85,9 +80,7 @@ export default function App() {
   const [rawText, setRawText] = useState(BOOT_DRAFT ? JSON.stringify(BOOT_DRAFT.messages) : '');
   const [mediaMap, setMediaMap] = useState<Record<string, string>>(BOOT_DRAFT?.mediaMap ?? {});
   const [mediaBlobs, setMediaBlobs] = useState<Record<string, Blob>>({});
-  // A blob: URL pins its Blob in memory until it is revoked. Open a 400-photo
-  // chat, then open another, and the first chat's photos never leave the tab.
-  // Signed Supabase URLs are http(s) and own nothing, so they are left alone.
+
   const liveBlobUrls = useRef<string[]>([]);
   useEffect(() => {
     const next = Object.values(mediaMap).filter((u) => u.startsWith('blob:'));
@@ -109,10 +102,7 @@ export default function App() {
   const [showFrame, setShowFrame] = useState(BOOT_DRAFT?.showFrame ?? true);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  // Entering edit mode re-renders every row (each grows a toolbar and an
-  // editable field), which on a large chat is a heavy render. As a transition
-  // it runs in the background: the tab stays scrollable and the Edit button
-  // shows it is working, instead of the whole page freezing.
+
   const [editPending, startEditTransition] = useTransition();
   const toggleEditMode = () => startEditTransition(() => setEditMode((v) => !v));
   const [composeText, setComposeText] = useState('');
@@ -146,23 +136,16 @@ export default function App() {
   const toastTimer = useRef<number | undefined>(undefined);
 
   useEffect(() => onAuthChange(setSession), []);
-  // When the user returns from a password-reset email, prompt for a new password.
+
   useEffect(() => onPasswordRecovery(() => setRecovery(true)), []);
 
-  // Promoter referral tracking: log a visit if the URL has ?ref=<promoter>, and
-  // mark an "activated" once they actually open a chat / live room.
   useEffect(() => { captureRef(); }, []);
   useEffect(() => { if (screen === 'viewer' || screen === 'continue') markActivated(); }, [screen]);
 
-  // ---- refresh persistence: reload the same page you were on ----
-  // Remember the current page so a refresh reopens it (not the landing screen).
-  // 'shared'/'continue'/'privacy'/'terms' restore from their own URL, so we only
-  // record the localStorage-driven ones here.
   useEffect(() => {
     if (screen === 'landing' || screen === 'upload' || screen === 'viewer' || screen === 'myrooms') saveScreen(screen);
   }, [screen]);
-  // Auto-save the chat you're building/editing (debounced) so a refresh brings it
-  // back with all its settings. Media from a .zip (blob: URLs) can't be persisted.
+
   useEffect(() => {
     if (screen !== 'viewer') return;
     const id = window.setTimeout(() => {
@@ -174,19 +157,10 @@ export default function App() {
     return () => window.clearTimeout(id);
   }, [screen, messages, senders, meName, contactTitle, status, showStatusBar, showTyping, dateOrder, model, theme, showFrame, wallpaper, avatar, mediaMap]);
 
-  // ---- browser/phone Back button support ----
-  // Seed history so the FIRST Back press stays INSIDE the app instead of leaving
-  // the site. When we boot straight into a deep screen (e.g. someone opening a
-  // ?room= invite link), stack 'landing' underneath it, so Back returns to the
-  // app (and the chat is one Forward away) instead of dumping them back to
-  // wherever they tapped the link. lastPushed = the screen the top history
-  // entry currently reflects, so we never push a duplicate.
   type Screen = 'landing' | 'upload' | 'viewer' | 'shared' | 'privacy' | 'terms' | 'continue' | 'myrooms';
   const lastPushed = useRef<Screen>('landing');
   useEffect(() => {
-    // On a REFRESH the browser preserves the history stack + our {screen} state,
-    // so only seed the "landing underneath" on a genuinely fresh load. Re-seeding
-    // every refresh piled up duplicate entries and made Back appear stuck.
+
     const savedScreen = (window.history.state as { screen?: Screen } | null)?.screen;
     if (!savedScreen) {
       window.history.replaceState({ screen: 'landing' }, '');
@@ -204,12 +178,11 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
-    if (screen === lastPushed.current) return;   // already reflected (initial seed or a popstate)
+    if (screen === lastPushed.current) return;
     window.history.pushState({ screen }, '');
     lastPushed.current = screen;
   }, [screen]);
 
-  // open a shared chat if the URL has ?c=<token>
   useEffect(() => {
     const token = new URLSearchParams(location.search).get('c');
     if (!token) return;
@@ -229,14 +202,12 @@ export default function App() {
   const userEmail = session?.user?.email ?? null;
   const stats = useMemo(() => computeStats(messages), [messages]);
 
-  // Unique chat dates in chronological order — powers the From/To date filter.
   const uniqueDates = useMemo(() => {
     const seen = new Set<string>(); const out: string[] = [];
     for (const m of messages) if (m.date && !seen.has(m.date)) { seen.add(m.date); out.push(m.date); }
     return out;
   }, [messages]);
 
-  // First → last chat day, stamped on the book cover.
   const bookDateRange = useMemo(() => {
     const f = messages.find((m) => m.date)?.date;
     const l = [...messages].reverse().find((m) => m.date)?.date;
@@ -245,7 +216,6 @@ export default function App() {
 
   const filterActive = !!(filter.sender || filter.from || filter.to || filter.mediaOnly);
 
-  // Indices to hide (never removed) so search / edit / index alignment all stay intact.
   const hiddenSet = useMemo(() => {
     const hide = new Set<number>();
     if (!filterActive) return hide;
@@ -269,17 +239,13 @@ export default function App() {
 
   const visibleCount = messages.length - hiddenSet.size;
 
-  // The search box updates instantly, but recomputing matches and re-highlighting
-  // the list over thousands of messages is heavy. Deferring the query lets React
-  // keep the input responsive and update the results at a lower priority, so
-  // typing never stutters on a big chat.
   const deferredSearch = useDeferredValue(search);
   const matchIndices = useMemo(() => {
     const q = deferredSearch.trim().toLowerCase();
     if (!q) return [] as number[];
     const out: number[] = [];
     messages.forEach((m, i) => {
-      if (hiddenSet.has(i)) return;   // don't match rows hidden by the active filter
+      if (hiddenSet.has(i)) return;
       if (!m.system && m.sender && P.stripMarks(m.text).toLowerCase().includes(q)) out.push(i);
     });
     return out;
@@ -295,13 +261,12 @@ export default function App() {
     if (msg && ms > 0) toastTimer.current = window.setTimeout(() => setToastMsg(''), ms);
   }
 
-  // A saved chat stores the edited messages as JSON; a fresh upload is raw WhatsApp text.
   function parseStored(text: string): P.Message[] | null {
     if (!text || text[0] !== '[') return null;
     try {
       const arr = JSON.parse(text);
       if (Array.isArray(arr) && arr.every((m) => m && typeof m.text === 'string' && 'date' in m)) return arr as P.Message[];
-    } catch { /* not JSON */ }
+    } catch {  }
     return null;
   }
 
@@ -325,10 +290,9 @@ export default function App() {
     setScreen('viewer');
   }
 
-  // rename the "me" participant everywhere in the loaded chat
   function renameMe(newName: string) {
     const t = newName;
-    if (!t.trim()) return;                       // don't allow empty names
+    if (!t.trim()) return;
     if (meName == null) { setMeName(t); return; }
     if (t === meName) return;
     setMessages((msgs) => msgs.map((m) => (m.sender === meName ? { ...m, sender: t } : m)));
@@ -336,14 +300,13 @@ export default function App() {
     setMeName(t);
   }
 
-  // swap which side is "me" (right side)
   function swapSides() {
     if (senders.length < 2) return;
     const idx = Math.max(0, senders.indexOf(meName ?? ''));
     const other = senders[(idx + 1) % senders.length];
     const oldMe = meName;
     setMeName(other);
-    if (senders.length === 2 && oldMe) setContactTitle(oldMe);  // header shows the non-me person
+    if (senders.length === 2 && oldMe) setContactTitle(oldMe);
   }
 
   function editText(index: number, text: string) {
@@ -542,8 +505,7 @@ export default function App() {
         (i, total) => toast(`${t('tUploading')} ${i} / ${total}…`, 0),
       );
       setSaveOpen(false);
-      // Don't claim a clean save if some photos didn't make it — the user can
-      // save again to retry just as easily as being misled.
+
       if (res.failed > 0) toast(t('tSavedPartial').replace('{a}', String(res.failed)).replace('{b}', String(res.total)), 6000);
       else toast(t('tSaved'), 2500);
     } catch (e) {
@@ -596,7 +558,7 @@ export default function App() {
           userEmail={userEmail}
           onLogin={() => setAuthOpen(true)}
           onHome={() => {
-            // drop ?room= so a later refresh on the home screen doesn't jump back in
+
             const u = new URL(window.location.href);
             if (u.searchParams.has('room')) { u.searchParams.delete('room'); window.history.replaceState(window.history.state, '', u); }
             setContinueMode(null); setScreen('landing');

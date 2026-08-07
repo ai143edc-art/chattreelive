@@ -92,11 +92,6 @@ export default function PhoneViewer(props: Props) {
     el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
   }, [activeMsgIndex]);
 
-  // Search highlighting is painted directly onto the rows, not rendered by the
-  // list — that is what keeps a keystroke off the reconciler on a huge chat. It
-  // re-runs when the matches move (matchSet / active) and after anything that
-  // rebuilds the rows (new/edited messages, filter, translation, edit mode),
-  // because a rebuild resets the rows to plain and the lit ones must be restored.
   useLayoutEffect(() => {
     applyHighlights(bodyRef.current, props.matchSet, activeMsgIndex);
   }, [props.matchSet, activeMsgIndex, props.messages, props.hiddenSet, props.translated, props.translations, props.editMode, props.showTyping]);

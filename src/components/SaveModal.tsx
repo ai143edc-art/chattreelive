@@ -10,7 +10,6 @@ interface Props {
   saving: boolean;
 }
 
-/** Asks for an optional category before saving a chat to the cloud history. */
 export default function SaveModal({ open, onClose, onSave, saving }: Props) {
   const { t } = useLang();
   const [sel, setSel] = useState('');

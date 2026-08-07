@@ -9,12 +9,8 @@ function mmss(s: number): string {
   return `${m}:${String(r).padStart(2, '0')}`;
 }
 
-/** Full-screen call UI for Continue Chat — incoming/outgoing/in-call. */
 export default function CallOverlay({ call, otherName, t }: { call: CallApi; otherName: string; t: T }) {
-  // Callback refs: reliably (re)attach the MediaStream + start playback whenever
-  // the <video> node mounts. A plain effect missed the remount when the call
-  // went connecting -> connected, leaving the element with no srcObject (black
-  // video / no audio). These run on every mount, so the stream always attaches.
+
   const attachRemote = useCallback((node: HTMLVideoElement | null) => {
     if (node) { node.srcObject = call.remoteStream; void node.play?.().catch(() => {}); }
   }, [call.remoteStream]);
@@ -42,7 +38,6 @@ export default function CallOverlay({ call, otherName, t }: { call: CallApi; oth
   });
   const smallBtn = (bg: string): React.CSSProperties => ({ ...roundBtn(bg), width: 54, height: 54, fontSize: 22 });
 
-  // brief "call ended / declined" flash after the call closes
   if (state === 'idle') {
     if (!ended) return null;
     const msg = ended === 'declined' ? t('callDeclined')
@@ -65,9 +60,7 @@ export default function CallOverlay({ call, otherName, t }: { call: CallApi; oth
 
   return (
     <div style={overlay}>
-      {/* ONE remote <video> stays mounted for the whole call, so its stream never
-          detaches — audio always plays; it just fills the screen for a video call
-          and is a 1x1 invisible audio sink for a voice call. */}
+
       {(state === 'connecting' || state === 'connected') && (
         <video ref={attachRemote} autoPlay playsInline
           style={showVideo
@@ -80,21 +73,18 @@ export default function CallOverlay({ call, otherName, t }: { call: CallApi; oth
           style={{ position: 'absolute', top: 16, right: 16, width: 108, height: 150, objectFit: 'cover', borderRadius: 12, border: '2px solid #ffffff55', zIndex: 2, background: '#000' }} />
       )}
 
-      {/* header: name + status */}
       <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', textShadow: showVideo ? '0 1px 6px rgba(0,0,0,.6)' : 'none' }}>
         <div style={{ fontSize: 23, fontWeight: 800 }}>{otherName}</div>
         <div style={{ fontSize: 15, opacity: 0.9, marginTop: 4 }}>{statusText}</div>
         <div style={{ fontSize: 12, opacity: 0.75, marginTop: 10 }}>{t('callEncrypted')}</div>
       </div>
 
-      {/* centre avatar for non-video states */}
       {!showVideo && (
         <div style={{ position: 'relative', zIndex: 2 }}>
           <div style={avatar}>{(otherName || '?').charAt(0).toUpperCase()}</div>
         </div>
       )}
 
-      {/* controls */}
       <div style={{ position: 'relative', zIndex: 2, display: 'flex', gap: 22, alignItems: 'center' }}>
         {state === 'ringing' ? (
           <>

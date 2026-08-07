@@ -30,7 +30,7 @@ export default function HistoryModal({ open, onClose, onOpenChat, toast }: Props
     listChats().then(setRows).catch((e) => setErr((e as Error).message || String(e)));
   }, [open]);
 
-  async function refresh() { try { setRows(await listChats()); } catch { /* ignore */ } }
+  async function refresh() { try { setRows(await listChats()); } catch {  } }
 
   async function openChat(id: string) {
     if (openingId) return;

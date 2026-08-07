@@ -4,8 +4,6 @@ import type { ErrorInfo, ReactNode } from 'react';
 interface Props { children: ReactNode }
 interface State { hasError: boolean; message: string }
 
-/** Catches render/runtime errors anywhere in the tree and shows a recovery screen
- *  instead of an unrecoverable blank page. */
 export default class ErrorBoundary extends Component<Props, State> {
   state: State = { hasError: false, message: '' };
 

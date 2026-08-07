@@ -1,9 +1,6 @@
 import { useEffect, useState } from 'react';
 import { referralStats, type RefStat } from '../lib/referral';
 
-/** Owner-only promoter dashboard, reached at ?refstats. Shows per-ref counts.
- *  The referral_stats RPC returns rows only for the owner account, so a
- *  non-owner just sees an empty table. */
 export default function RefStats({ userEmail, onLogin, onBack }: { userEmail: string | null; onLogin: () => void; onBack: () => void }) {
   const [rows, setRows] = useState<RefStat[]>([]);
   const [loading, setLoading] = useState(false);

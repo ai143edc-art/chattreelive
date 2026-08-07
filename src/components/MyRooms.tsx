@@ -7,13 +7,6 @@ import { confirmDialog, alertDialog } from '../lib/dialog';
 import { useLang } from '../lib/i18n';
 import type { TKey } from '../lib/i18n';
 
-/**
- * "My continue-chats" — recover a live room even if the share link is lost, and
- * manage it: 🏷️ label, 🔗 copy link, ✏️ rename, 🗑️ delete.
- *  • On this device: rooms remembered in localStorage (link + PIN) → one-tap reopen.
- *  • Saved to your account: rooms you created, recoverable from ANY device once
- *    logged in (link comes back from your account; you re-enter your PIN).
- */
 interface Props {
   userEmail: string | null;
   onOpen: (roomId: string, pin?: string) => void;
@@ -21,8 +14,6 @@ interface Props {
   onLogin: () => void;
 }
 
-// `k` is a STABLE key (stored as the room's tag — never translate it); `tk` is
-// the i18n key for the label we actually show, so switching language is display-only.
 const CATS: { k: string; e: string; tk: TKey }[] = [
   { k: 'Family', e: '👨‍👩‍👧', tk: 'mrCatFamily' }, { k: 'Friends', e: '🧑‍🤝‍🧑', tk: 'mrCatFriends' }, { k: 'Love', e: '❤️', tk: 'mrCatLove' },
   { k: 'Work', e: '💼', tk: 'mrCatWork' }, { k: 'Study', e: '📚', tk: 'mrCatStudy' }, { k: 'Other', e: '🏷️', tk: 'mrCatOther' },

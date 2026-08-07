@@ -1,11 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLang } from './i18n';
 
-// App-styled replacements for the browser's confirm() / alert() / prompt(), so
-// every dialog matches the app instead of the plain OS box. Imperative + promise-
-// based, driven by a single <DialogHost/> mounted once at the root — so any code
-// can just `await confirmDialog({...})` without threading props/hooks around.
-
 type Kind = 'confirm' | 'alert' | 'prompt';
 interface Req {
   kind: Kind;
@@ -24,7 +19,7 @@ let emit: ((r: Req) => void) | null = null;
 function ask(req: Omit<Req, 'resolve'>): Promise<boolean | string | null | undefined> {
   return new Promise((resolve) => {
     if (!emit) {
-      // host not mounted yet → fall back to native so nothing silently breaks
+
       if (req.kind === 'confirm') resolve(window.confirm(req.message));
       else if (req.kind === 'prompt') resolve(window.prompt(req.message, req.defaultValue ?? ''));
       else { window.alert(req.message); resolve(undefined); }

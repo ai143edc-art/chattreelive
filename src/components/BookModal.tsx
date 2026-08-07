@@ -32,7 +32,6 @@ export default function BookModal(p: Props) {
   const [tpls, setTpls] = useState<BookTemplate[]>([]);
   const [tplName, setTplName] = useState('');
 
-  // Re-seed the title from the current chat whenever the studio is opened.
   useEffect(() => {
     if (p.open) { setCfg((c) => ({ ...c, title: p.defaultTitle })); setTpls(loadTemplates()); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -54,8 +53,7 @@ export default function BookModal(p: Props) {
     setTpls(saveTemplate(name, cfg));
     setTplName('');
   }
-  /** Merge over the defaults so templates saved before a field existed
-   *  (e.g. phoneFrame, twoColumns, sizeKey) don't leave it undefined. */
+
   function applyTpl(tp: BookTemplate) {
     const title = cfg.title || tp.config.title;
     setCfg({ ...defaultBookConfig(title), ...tp.config, title });
@@ -69,8 +67,6 @@ export default function BookModal(p: Props) {
     </label>
   );
 
-  /** Phone frame and two columns can't both apply — a phone is a single column.
-   *  Turning one on switches the other off, so neither silently does nothing. */
   const exclusiveToggle = (key: 'phoneFrame' | 'twoColumns', other: 'phoneFrame' | 'twoColumns', label: string) => (
     <label className="bk-toggle">
       <input type="checkbox" checked={cfg[key]}
@@ -81,7 +77,6 @@ export default function BookModal(p: Props) {
     </label>
   );
 
-  // The cover is bookcloth, so the stats become one delicate colophon line.
   const weaveImg = weaveUrl(th);
   const vignette = vignetteBg(th);
   const range = p.dateRange || '';
@@ -91,18 +86,16 @@ export default function BookModal(p: Props) {
     p.mediaCount ? `${p.mediaCount.toLocaleString()} photograph${p.mediaCount === 1 ? '' : 's'}` : '',
   ].filter(Boolean).join('   ·   ');
 
-  // ---- live inside-page preview bits ----
   const doodle = (ink: string) => "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><g fill='none' stroke='%23"
     + ink.replace('#', '')
     + "' stroke-width='2' stroke-linecap='round'><circle cx='20' cy='24' r='7'/><path d='M60 16 h22 v13 h-13 l-6 6 v-6 h-3 z'/><path d='M96 20 q6 -7 12 0'/><path d='M16 70 q7 -8 14 0'/><path d='M70 64 l4 8 8 1 -6 6 2 8 -8 -4 -8 4 2 -8 -6 -6 8 -1 z'/><rect x='96' y='62' width='18' height='14' rx='3'/><path d='M22 104 q7 -8 14 0'/><circle cx='92' cy='104' r='6'/></g></svg>\")";
-  // The plate wears the wallpaper; the paper around it is the page itself.
+
   const plateBg: CSSProperties = cfg.showWallpaper
     ? { backgroundColor: th.chatBg, backgroundImage: doodle(th.doodleInk), backgroundSize: '54px 54px' }
     : { background: th.chatBg };
-  // "9 July 2026  —  18 July 2026" → "July 2026", the chapter for the running head.
+
   const monthSample = (p.dateRange || '').split('—')[0].trim().split(/\s+/).slice(1).join(' ') || 'July 2026';
-  // A day pill inside that same month, so the sample page reads coherently with
-  // its running head instead of showing July under a January heading.
+
   const daySample = `9 ${monthSample}`;
   const SAMPLE = [
     { out: false, txt: 'Kal milte hai? ☕' }, { out: true, txt: 'Haan pakka 👍' },
@@ -126,7 +119,7 @@ export default function BookModal(p: Props) {
       if (pos[1] === 'l') { s.left = 5; s.borderRight = 'none'; } else { s.right = 5; s.borderLeft = 'none'; }
       return <span key={pos} className="bk-fc" style={s} />;
     });
-    // A diamond centred on each edge — the flourish that makes 'ornate' ornate.
+
     const edges = (['t', 'b', 'l', 'r'] as const).map((e) => {
       const s: CSSProperties = { background: th.accent };
       if (e === 't') { s.top = 4; s.left = '50%'; } else if (e === 'b') { s.bottom = 4; s.left = '50%'; }
@@ -154,7 +147,7 @@ export default function BookModal(p: Props) {
         <h3>📖 {t('bkTitle')}</h3>
 
         <div className="bk-grid">
-          {/* ---- live preview ---- */}
+
           <div className="bk-preview">
             <div className="bk-cover" style={{ background: th.cloth, color: th.foil, aspectRatio: `${sz.w}/${sz.h}` }}>
               <div className="bk-weave" style={{ backgroundImage: weaveImg }} />
@@ -183,7 +176,6 @@ export default function BookModal(p: Props) {
             </div>
             <div className="bk-preview-cap">{t('bkPreview')} · Cover</div>
 
-            {/* inside / chat page — live. Paper carries the furniture, the plate carries the chat. */}
             <div className="bk-inside" style={{ aspectRatio: `${sz.w}/${sz.h}`, background: th.paper }}>
               <span className="bk-gutter" />
               {frameJsx()}
@@ -233,7 +225,6 @@ export default function BookModal(p: Props) {
             <div className="bk-preview-cap">Inside page</div>
           </div>
 
-          {/* ---- settings ---- */}
           <div className="bk-settings">
             <label className="bk-field">
               <span>{t('bkTitleLabel')}</span>
@@ -312,7 +303,6 @@ export default function BookModal(p: Props) {
           </div>
         </div>
 
-        {/* A long book is minutes of html2canvas; show it moving or it reads as a hang. */}
         {p.exporting && p.progress && (
           <div className="bk-prog">
             <div className="bk-prog-bar">

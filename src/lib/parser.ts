@@ -4,10 +4,10 @@ export interface Message {
   sender: string | null;
   text: string;
   system: boolean;
-  tick?: number;   // outgoing tick state: 0 none, 1 sent ✓, 2 delivered ✓✓, 3 read (blue)
-  reply?: { sender: string; text: string };   // quoted message
-  reactions?: string[];                        // emoji reactions
-  forwarded?: boolean;                         // "Forwarded" label
+  tick?: number;
+  reply?: { sender: string; text: string };
+  reactions?: string[];
+  forwarded?: boolean;
   call?: { media: 'voice' | 'video'; title: string; sub: string; missed: boolean };
 }
 
@@ -36,7 +36,6 @@ export function parseChat(text: string): Message[] {
   return out;
 }
 
-/* ---- media / placeholder detection ---- */
 export const MEDIA_EXT = /\.(jpe?g|png|gif|webp|bmp|heic|mp4|3gp|mov|mkv|webm|avi|opus|mp3|aac|m4a|wav|ogg|amr|pdf|docx?|xlsx?|pptx?|txt|vcf|zip|apk)$/i;
 export const PLACEHOLDERS = /^\s*‎?(<Media omitted>|image omitted|video omitted|audio omitted|GIF omitted|sticker omitted|Contact card omitted|document omitted|This message was deleted\.?|You deleted this message\.?|null)\s*$/i;
 const FNAME = /([^\s<>][^\n<>]*?\.(?:jpe?g|png|gif|webp|bmp|heic|mp4|3gp|mov|mkv|webm|avi|opus|mp3|aac|m4a|wav|ogg|amr|pdf|docx?|xlsx?|pptx?|txt|vcf|zip|apk))/i;

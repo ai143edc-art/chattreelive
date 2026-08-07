@@ -24,7 +24,7 @@ export default function AuthModal({ open, onClose, toast }: Props) {
   const [captcha, setCaptcha] = useState('');
 
   function close() { setEmail(''); setPw(''); setErr(''); setOk(false); setBusy(false); setCaptcha(''); setMode('in'); onClose(); }
-  // Escape must not abandon a sign-in that is already in flight.
+
   useModal(open, close, !busy);
   function go(next: 'in' | 'up' | 'reset') { setMode(next); setErr(''); setOk(false); }
   const keyActivate = (fn: () => void) => (e: React.KeyboardEvent) => {
@@ -35,7 +35,7 @@ export default function AuthModal({ open, onClose, toast }: Props) {
     setErr(''); setBusy(true);
     try { const { error } = await signInWithGoogle(); if (error) throw error; }
     catch (e) { setErr((e as Error).message || String(e)); setBusy(false); }
-    // on success the browser redirects to Google, so no further handling needed
+
   }
 
   async function sendReset() {

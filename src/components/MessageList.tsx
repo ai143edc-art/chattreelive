@@ -57,8 +57,6 @@ function Ticks({ tick, editMode, onClick }: { tick?: number; editMode?: boolean;
   );
 }
 
-/** contentEditable span whose text is set imperatively once, so React never
- *  wipes the user's edits on re-render. Commits on blur. */
 function EditableText({ initial, onCommit }: { initial: string; onCommit: (t: string) => void }) {
   const ref = useRef<HTMLSpanElement>(null);
   useLayoutEffect(() => { if (ref.current) ref.current.innerText = initial; }, [initial]);
@@ -88,16 +86,6 @@ function renderMedia(url: string | undefined, ext: string, name: string, onOpenM
   );
 }
 
-/**
- * One message row. Extracted and memoized so that a search keystroke, a filter,
- * or a translation toggle only re-renders the rows whose own state changed —
- * not all N of them. Everything a row's markup depends on arrives as a value:
- * its match/active flags, its resolved media URL, its translation string. The
- * action callbacks are intentionally left out of the memo comparison: they all
- * update state by index through functional setState, so a row holding an older
- * reference still behaves correctly, and treating them as stable is what lets
- * the comparison work at all.
- */
 export interface RowProps {
   m: Message;
   mi: number;
@@ -165,9 +153,6 @@ function RowInner({
   const who = isGroup && !out && !grp
     ? <div className={'who ' + P.colorFor(m.sender!)}>{m.sender}</div> : null;
 
-  // Search-match highlighting (.hl / .hla) is not rendered here on purpose: it
-  // is painted straight onto these rows by applyHighlights so a keystroke never
-  // has to rebuild the list. See applyHighlights below.
   return (
     <div className={`row ${out ? 'out' : 'in'}${grp ? ' grp' : ''}${editMode ? ' editmode' : ''}`} data-mi={mi}>
       {editMode && onDeleteMsg && (
@@ -200,13 +185,6 @@ function RowInner({
   );
 }
 
-/**
- * A row re-renders only when something its markup depends on changes. Action
- * callbacks are left out on purpose: they update state by index through
- * functional setState, so a row holding an older reference still behaves
- * correctly, and comparing them (they are fresh each render) would defeat the
- * memo entirely. Exported so the contract is pinned by a test.
- */
 export function rowPropsEqual(a: RowProps, b: RowProps): boolean {
   return a.m === b.m
     && a.mi === b.mi
@@ -227,9 +205,7 @@ function MessageList({ messages, meName, senders, mediaMap, dateOrder, hiddenSet
 
   for (const m of messages) {
     mi++;
-    // Filtered-out rows are skipped before any date header, so hidden days
-    // never leave an orphan date separator, and every index below stays aligned
-    // with the full messages array (search / edit / active-match all keep working).
+
     if (hiddenSet?.has(mi)) continue;
     if (m.date !== lastDate) {
       const d = m.date;
@@ -247,8 +223,7 @@ function MessageList({ messages, meName, senders, mediaMap, dateOrder, hiddenSet
     }
     const out = m.sender === meName;
     const grp = prevSender === m.sender;
-    // Resolve everything a row's markup depends on to a primitive here, so the
-    // memoized Row can compare by value and skip untouched rows on re-render.
+
     const att = m.call ? null : P.findAttachment(m.text);
     const mediaUrl = att ? mediaMap[att.split('/').pop()!.toLowerCase()] : undefined;
     nodes.push(
@@ -291,16 +266,6 @@ function MessageList({ messages, meName, senders, mediaMap, dateOrder, hiddenSet
   return <>{nodes}</>;
 }
 
-/**
- * Rebuilding the list means creating an element for all N messages and letting
- * every row's memo decide whether to update — cheap per row, but not free at
- * eight thousand. So the whole list is memoized too: a keystroke in the search
- * box re-renders the phone chrome for the input, but the list only rebuilds when
- * something it actually shows changes. Callbacks are excluded for the same
- * reason as on the rows — they are index-keyed functional setState, so a stale
- * reference is still correct, and comparing them (fresh each render) would make
- * the memo never hold.
- */
 function listPropsEqual(a: Props, b: Props): boolean {
   return a.messages === b.messages
     && a.meName === b.meName
@@ -317,17 +282,6 @@ function listPropsEqual(a: Props, b: Props): boolean {
 export default memo(MessageList, listPropsEqual);
 export { listPropsEqual };
 
-/**
- * Paints the search-match highlight straight onto the already-rendered rows,
- * instead of it being part of each row's React output. This is the whole reason
- * a keystroke no longer rebuilds the list: matches move by toggling two classes
- * on the DOM rows the viewer already has, in one pass over `container`.
- *
- * It is idempotent and self-clearing — every message row is visited and its
- * `.hl` / `.hla` set to exactly what the current match set says, so re-running
- * with a new set (or an empty one, to clear) always leaves the right rows lit.
- * Rows carry `data-mi`; the typing indicator has no `data-mi` and is skipped.
- */
 export function applyHighlights(
   container: HTMLElement | null,
   matchSet: Set<number> | undefined,

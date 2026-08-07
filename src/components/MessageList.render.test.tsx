@@ -3,12 +3,6 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import MessageList from './MessageList';
 import type { Message } from '../lib/parser';
 
-/**
- * A golden snapshot of the list's exact HTML across every message shape. The
- * message list also feeds the PNG/PDF export, which screenshots this DOM, so a
- * refactor must not move a single node. This renders a broad matrix and pins
- * the markup; any change to the output fails here before it can reach a page.
- */
 const M = (m: Partial<Message>): Message =>
   ({ date: '01/06/2026', time: '09:00', sender: 'Riya', text: 'hi', system: false, ...m });
 
@@ -26,7 +20,7 @@ const cases: Record<string, { messages: Message[]; senders: string[]; extra?: Re
     messages: [
       M({ sender: 'Riya', text: 'Kal milte hai?' }),
       M({ sender: 'Vikku', text: 'Haan pakka', tick: 3 }),
-      M({ sender: 'Vikku', text: 'Pakka pakka', tick: 2 }),   // grouped, delivered tick
+      M({ sender: 'Vikku', text: 'Pakka pakka', tick: 2 }),
     ],
   },
   'group chat with sender colours': {
@@ -43,7 +37,7 @@ const cases: Record<string, { messages: Message[]; senders: string[]; extra?: Re
       M({ sender: 'Riya', text: 'pic.jpg (file attached)' }),
       M({ sender: 'Riya', text: 'clip.mp4 (file attached)' }),
       M({ sender: 'Riya', text: 'doc.pdf (file attached)' }),
-      M({ sender: 'Riya', text: 'gone.jpg (file attached)' }),   // no url in mediaMap
+      M({ sender: 'Riya', text: 'gone.jpg (file attached)' }),
       M({ sender: 'Riya', text: 'pic.jpg (file attached)\nwith a caption' }),
     ],
   },

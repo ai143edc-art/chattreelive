@@ -8,8 +8,6 @@ interface Props {
   placeholder?: string;
 }
 
-/** Small custom dropdown — opens a compact scrollable menu instead of the
- *  full-screen native picker on phones. */
 export default function MiniSelect({ value, options, onChange, placeholder }: Props) {
   const [open, setOpen] = useState(false);
   const cur = options.find((o) => o.value === value);

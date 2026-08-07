@@ -25,7 +25,7 @@ interface Props {
 export default function Uploader({ onLoaded, onContinue, onContinueFresh, onMyRooms, onHistory, onBlank, onHome, userEmail, onLogin, onAccount }: Props) {
   const { t } = useLang();
   const inputRef = useRef<HTMLInputElement>(null);
-  // which flow the file picker was opened for: normal view vs "continue chat"
+
   const modeRef = useRef<'view' | 'continue'>('view');
   const [drag, setDrag] = useState(false);
   const [busy, setBusy] = useState('');
@@ -47,8 +47,7 @@ export default function Uploader({ onLoaded, onContinue, onContinueFresh, onMyRo
         if (lower.endsWith('.zip')) {
           try {
             setBusy(t('busyZip'));
-            // ~95 KB — only a .zip upload needs it, so it stays out of the
-            // bundle every visitor downloads and loads on first use instead.
+
             const { default: JSZip } = await import('jszip');
             const zip = await JSZip.loadAsync(f);
             const entries = Object.values(zip.files);

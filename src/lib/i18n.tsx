@@ -3,12 +3,10 @@ import type { ReactNode } from 'react';
 
 export type Lang = 'en' | 'hi';
 
-/* Every user-facing string keyed once, with an English and a Hindi variant.
-   Add a key here and it's instantly available via t('key') anywhere. */
 const DICT = {
   en: {
     langName: 'English',
-    // ---- Landing ----
+
     badge: 'Free · No sign-up to try',
     navOpen: 'Open app',
     heroTitle: 'WhatsApp-style chat generator & viewer',
@@ -49,7 +47,7 @@ const DICT = {
     footerDisc: 'Chat Tree is an independent tool and is not affiliated with, endorsed by, or connected to WhatsApp or Meta. “WhatsApp” is a trademark of Meta Platforms, Inc. Please use responsibly — do not create content to deceive or harm others.',
     guideLink: '📖 Guides',
     privacyLink: 'Privacy Policy',
-    // ---- Auth ----
+
     welcomeBack: 'Welcome back', createAccount: 'Create your account',
     signInSub: 'Log in to open your saved chats.', signUpSub: 'Sign up to save your chats to a private history.',
     emailPh: 'Email address',
@@ -69,7 +67,7 @@ const DICT = {
     setNewTitle: 'Set a new password', setNewSub: 'Choose a new password for your account.',
     updatePw: 'Update password', pwUpdated: '✅ Password updated — you are now logged in.',
     termsLink: 'Terms of Use',
-    // ---- Uploader ----
+
     upTitle: 'Start your chat', upSub: 'Create a chat from scratch, or upload an exported chat to view & edit it.',
     upBlank: 'Create blank chat', upBlankDesc: 'Start empty and build it message by message',
     upUpload: 'Upload exported chat', upUploadDesc: 'Drop a', upWithMedia: '(with media)',
@@ -84,7 +82,7 @@ const DICT = {
     dlgCancel: 'Cancel',
     dlgDelete: 'Delete',
     dlgSave: 'Save',
-    // ---- Toolbar ----
+
     tbLogin: '🔐 Log in', tbSettings: '⚙️ Settings', tbEdit: '✏️ Edit:', tbHome: 'Home',
     tbEditHint: 'Click messages to edit them', tbYou: 'You are (right side)', tbYourName: 'Your name',
     tbSwap: 'Swap sides (left ↔ right)', tbContact: 'Contact name (header)', tbNamePh: 'Name',
@@ -94,7 +92,7 @@ const DICT = {
     tbCustomStatus: 'custom status…', tbModel: 'Phone model (screen size)',
     on: 'ON', off: 'OFF', stOnline: 'online', stTyping: 'typing…', stSeen: 'last seen recently',
     stHidden: '(hidden)', stCustom: 'custom',
-    // ---- Viewer ----
+
     vJumpTop: '⬆️ Jump to top', vJumpLatest: '⬇️ Jump to latest', vTranslated: '🌐 Translated',
     vShown: 'shown', vNoResults: 'No results', vShowOriginal: 'Show original',
     vActStats: 'Stats', vActGallery: 'Gallery', vActFilter: 'Filter', vActTranslate: 'Translate',
@@ -105,7 +103,7 @@ const DICT = {
     vSideYou: '➡️ You', vSideThem: '⬅️ Them', vComposePh: 'Type a message to add…',
     vInsertTitle: 'Insert call / system message', vWhoSending: 'Who is sending?', vAddMsg: 'Add message',
     vAddPhoto: 'Add photo / video', vActions: 'Actions', vMedia: 'media',
-    // ---- History modal ----
+
     hTitle: '☁ Your saved chats', hSearch: '🔍 Search chats…', hAll: 'All',
     hEmpty: 'No saved chats yet. Open a chat and click “☁ Save to history”.',
     hLoading: 'Loading your chats…', hMsgs: 'msgs', hCategory: 'Category', hShare: 'Share link',
@@ -116,33 +114,33 @@ const DICT = {
     hCatPrompt: 'Category (e.g. {x})\nLeave blank to remove:',
     hShareCopied: '🔗 Share link copied! Anyone with it can view this chat (media links stay valid ~1 year).',
     hSharePrompt: 'Share this link (media links stay valid ~1 year):',
-    // ---- Account modal ----
+
     acTitle: '⚙️ Account', acSignedAs: 'Signed in as', acChangePw: 'Change password', acNewPw: 'New password (min 8)',
     acUpdatePw: 'Update password', acLogout: 'Log out', acDelete: '🗑️ Delete account',
     acPwChanged: '✅ Password changed', acLoggedOut: 'Logged out', acDeleted: 'Account deleted',
     acPwShort: 'Password must be at least 8 characters.',
     acDeleteConfirm1: 'Delete your account permanently?\nAll your saved chats and media will be erased. This cannot be undone.',
     acDeleteConfirm2: 'Are you absolutely sure? This is irreversible.',
-    // ---- Stats modal ----
+
     sStats: 'stats', sNoData: 'No data.', sMessages: 'Messages', sMedia: 'Media', sWords: 'Words',
     sEmojis: 'Emojis', sActiveDays: 'Active days', sMsgsDay: 'Msgs / day', sWhoMost: 'Who talked most',
     sBusiest: '🔥 Busiest day:', sMessagesLc: 'messages',
-    // ---- Save modal ----
+
     svTitle: '☁ Save to history', svSub: 'Give it a category to keep your chats organised (optional).',
     svCustom: '…or type your own category', svSkip: 'Skip', svSave: 'Save', svSaveTo: 'Save to', svSaving: 'Saving…',
-    // ---- Filter modal ----
+
     fTitle: '🔎 Filter chat', fSender: 'Sender', fEveryone: 'Everyone', fFrom: 'From date',
     fBeginning: 'Beginning', fTo: 'To date', fEnd: 'End', fMediaOnly: 'Show only messages with media 📎',
     fShowing: 'Showing', fOf: 'of', fMessages: 'messages', fClear: 'Clear all', fDone: 'Done',
-    // ---- Gallery modal ----
+
     gTitle: '🖼️ Media gallery', gAll: 'All', gPhotos: '📷 Photos', gVideos: '🎥 Videos', gEmpty: 'No media to show here. 📭',
-    // ---- Translate modal ----
+
     trTitle: '🌐 Translate', trWhole: 'Translate the whole chat', trFrom: 'From', trTo: 'To',
     trAuto: 'Auto-detect', trAutoShort: 'Auto', trEnglish: 'English', trHindi: 'Hindi',
     trGo: 'Translate chat', trReGo: 'Re-translate chat', trGoing: 'Translating…',
     trNote: 'The chat switches to the translation — you can toggle back to the original anytime from the badge on the chat.',
     trQuick: 'Quick translate a line', trQuickPh: 'Type or paste text to translate…', trGoSm: 'Translate', trCopy: '⧉ Copy',
-    // ---- App toasts / prompts / shared ----
+
     tExportImg: 'Preparing image… (large chats take a moment)', tExportPdf: 'Preparing PDF… (large chats take a moment)',
     tDownloaded: '✅ Downloaded', tBook: '📖 Building your keepsake book… (this can take a moment)', tBookDone: '✅ Book downloaded',
     tNothingTr: 'Nothing to translate here.', tTrProgress: '🌐 Translating', tTrDone: '✅ Chat translated',
@@ -153,7 +151,7 @@ const DICT = {
     pMsgTime: 'Message time (e.g. 8:45 PM):', pMsgDate: 'Date for this day (e.g. 25/12/2024):',
     pSystemMsg: 'System message (centered):', pCallDetails: 'Call details (e.g. "9 min" or "No answer"):',
     shSharedRO: '💬 Shared chat · read-only', shOpen: 'Open Chat Viewer →', shOpening: 'Opening shared chat…',
-    // ---- Book Studio ----
+
     bkTitle: 'Book Studio', bkTitleLabel: 'Book title', bkSubtitle: 'Subtitle',
     bkTheme: 'Theme', bkBorder: 'Page border', bkInclude: 'Include',
     bkCoverPage: 'Cover page', bkAvatar: 'Avatar on cover', bkStats: 'Stats on cover',
@@ -167,14 +165,14 @@ const DICT = {
     bkPhoneFrame: '📱 Phone frame', bkTwoCol: '2 columns / page', bkContents: 'Contents page',
     bkBigChatHint: '💡 Big chat? Turn on “2 columns / page” — it roughly halves the pages, so the PDF builds much faster with no loss of quality.',
     bkBuilding: 'Page {a} of {b}', bkBuildWait: 'Keep this tab open while the book is drawn.',
-    // ---- Keepsake section ----
+
     keepTitle: 'Made to be kept',
     keepBody: 'Turn the whole conversation into a bound keepsake book — a bookcloth cover stamped in foil, a chapter for every month, a contents page and a folio on every leaf.',
     keepP1: 'Six cloth themes, seven page sizes',
     keepP2: 'Bubbles print exactly as you see them — ticks, replies, reactions, photos',
     keepP3: 'Send it to a printer, or just keep the PDF',
     keepAlt: 'An open keepsake book, a printed chat on its page',
-    // ---- Share (QR) ----
+
     shareTitle: 'Share chat', shareScan: 'Scan to open this chat',
     shareCopy: 'Copy link', shareCopied: '✅ Link copied',
     shareDownload: 'Download QR', shareDownloaded: '✅ QR card downloaded',
@@ -184,7 +182,7 @@ const DICT = {
     shareNeverExpires: '♾ Never expires', shareExpiresIn: '⏱ Expires in',
     shareTtlNever: 'Never', shareTtl5m: '5 min', shareTtl1h: '1 hour',
     shareTtl5h: '5 hours', shareTtl24h: '24 hours', shareTtl7d: '7 days',
-    // ---- Continue Chat (live rooms) ----
+
     ccLiveTag: 'Continue chat · live',
     ccLastSeen: 'last seen', ccJustNow: 'just now', ccToday: 'today', ccYesterday: 'yesterday',
     ccSetupTitle: 'Continue this chat, live 🔗',
@@ -209,14 +207,14 @@ const DICT = {
     ccErrPinShort: 'PIN must be at least 4 characters.', ccErrEnterPin: 'Enter the PIN.', ccErrWrongPin: 'Wrong PIN, or this chat no longer exists.',
     ccMicPerm: 'Allow microphone access to record a voice message.',
     ccScreenshot: 'Save chat as image',
-    // ---- Calls (WebRTC) ----
+
     callVoice: 'Voice call', callVideo: 'Video call',
     callCalling: 'Calling…', callRingingVoice: 'Incoming voice call', callRingingVideo: 'Incoming video call',
     callConnecting: 'Connecting…', callAccept: 'Accept', callDecline: 'Decline', callEnd: 'End call',
     callMute: 'Mute', callUnmute: 'Unmute', callCam: 'Camera',
     callEncrypted: '🔒 End-to-end encrypted', callDeclined: 'Call declined', callEnded: 'Call ended',
     callErrMedia: 'Allow microphone / camera access to call.', callFailed: "Couldn't connect the call.",
-    // ---- My continue-chats ----
+
     mrHeaderTitle: 'My continue-chats', mrTitle: 'Your live chats 🔗',
     mrSub: 'Lost the link? Reopen a chat from here — and label, rename or delete it.',
     mrOnDevice: 'On this device', mrNoneDevice: 'No chats saved on this device yet.',
@@ -235,7 +233,7 @@ const DICT = {
   },
   hi: {
     langName: 'हिन्दी',
-    // ---- Landing ----
+
     badge: 'मुफ़्त · बिना साइन-अप आज़माएँ',
     navOpen: 'ऐप खोलें',
     heroTitle: 'WhatsApp जैसी चैट बनाएँ और देखें',
@@ -276,7 +274,7 @@ const DICT = {
     footerDisc: 'Chat Tree एक स्वतंत्र टूल है और WhatsApp या Meta से न जुड़ा है, न इनके द्वारा समर्थित है। “WhatsApp” Meta Platforms, Inc. का ट्रेडमार्क है। कृपया ज़िम्मेदारी से इस्तेमाल करें — किसी को धोखा देने या नुकसान पहुँचाने वाला कंटेंट न बनाएँ।',
     guideLink: '📖 गाइड्स',
     privacyLink: 'प्राइवेसी पॉलिसी',
-    // ---- Auth ----
+
     welcomeBack: 'वापसी पर स्वागत है', createAccount: 'अपना अकाउंट बनाएँ',
     signInSub: 'अपनी सेव की गई चैट खोलने के लिए लॉग इन करें।', signUpSub: 'अपनी चैट निजी हिस्ट्री में सेव करने के लिए साइन अप करें।',
     emailPh: 'ईमेल पता',
@@ -296,7 +294,7 @@ const DICT = {
     setNewTitle: 'नया पासवर्ड सेट करें', setNewSub: 'अपने अकाउंट के लिए नया पासवर्ड चुनें।',
     updatePw: 'पासवर्ड अपडेट करें', pwUpdated: '✅ पासवर्ड अपडेट हो गया — अब आप लॉग इन हैं।',
     termsLink: 'उपयोग की शर्तें',
-    // ---- Uploader ----
+
     upTitle: 'अपनी चैट शुरू करें', upSub: 'नई चैट बनाएँ, या एक्सपोर्ट की हुई चैट अपलोड करके देखें और एडिट करें।',
     upBlank: 'खाली चैट बनाएँ', upBlankDesc: 'खाली से शुरू करें और मैसेज-दर-मैसेज बनाएँ',
     upUpload: 'एक्सपोर्ट की हुई चैट अपलोड करें', upUploadDesc: 'डालें', upWithMedia: '(मीडिया के साथ)',
@@ -311,7 +309,7 @@ const DICT = {
     dlgCancel: 'रद्द करें',
     dlgDelete: 'हटाएं',
     dlgSave: 'सेव करें',
-    // ---- Toolbar ----
+
     tbLogin: '🔐 लॉग इन', tbSettings: '⚙️ सेटिंग्स', tbEdit: '✏️ एडिट:', tbHome: 'होम',
     tbEditHint: 'एडिट करने के लिए मैसेज पर क्लिक करें', tbYou: 'आप हैं (दाईं ओर)', tbYourName: 'आपका नाम',
     tbSwap: 'साइड बदलें (बाएँ ↔ दाएँ)', tbContact: 'कॉन्टैक्ट नाम (हेडर)', tbNamePh: 'नाम',
@@ -321,7 +319,7 @@ const DICT = {
     tbCustomStatus: 'कस्टम स्टेटस…', tbModel: 'फ़ोन मॉडल (स्क्रीन साइज़)',
     on: 'ON', off: 'OFF', stOnline: 'ऑनलाइन', stTyping: 'टाइप कर रहे हैं…', stSeen: 'अभी हाल में देखा गया',
     stHidden: '(छिपा हुआ)', stCustom: 'कस्टम',
-    // ---- Viewer ----
+
     vJumpTop: '⬆️ ऊपर जाएँ', vJumpLatest: '⬇️ नवीनतम पर जाएँ', vTranslated: '🌐 अनुवादित',
     vShown: 'दिख रहे', vNoResults: 'कोई नतीजा नहीं', vShowOriginal: 'मूल दिखाएँ',
     vActStats: 'आँकड़े', vActGallery: 'गैलरी', vActFilter: 'फ़िल्टर', vActTranslate: 'अनुवाद',
@@ -332,7 +330,7 @@ const DICT = {
     vSideYou: '➡️ आप', vSideThem: '⬅️ वो', vComposePh: 'जोड़ने के लिए मैसेज लिखें…',
     vInsertTitle: 'कॉल / सिस्टम मैसेज डालें', vWhoSending: 'कौन भेज रहा है?', vAddMsg: 'मैसेज जोड़ें',
     vAddPhoto: 'फ़ोटो / वीडियो जोड़ें', vActions: 'एक्शन', vMedia: 'मीडिया',
-    // ---- History modal ----
+
     hTitle: '☁ आपकी सेव की हुई चैट', hSearch: '🔍 चैट खोजें…', hAll: 'सभी',
     hEmpty: 'अभी कोई सेव की हुई चैट नहीं। कोई चैट खोलें और “☁ Save to history” दबाएँ।',
     hLoading: 'आपकी चैट लोड हो रही हैं…', hMsgs: 'मैसेज', hCategory: 'कैटेगरी', hShare: 'शेयर लिंक',
@@ -343,33 +341,33 @@ const DICT = {
     hCatPrompt: 'कैटेगरी (जैसे {x})\nहटाने के लिए खाली छोड़ें:',
     hShareCopied: '🔗 शेयर लिंक कॉपी हो गया! जिसके पास ये लिंक होगा वो ये चैट देख सकता है (मीडिया लिंक ~1 साल तक चलते हैं)।',
     hSharePrompt: 'ये लिंक शेयर करें (मीडिया लिंक ~1 साल तक चलते हैं):',
-    // ---- Account modal ----
+
     acTitle: '⚙️ अकाउंट', acSignedAs: 'लॉग इन:', acChangePw: 'पासवर्ड बदलें', acNewPw: 'नया पासवर्ड (कम से कम 8)',
     acUpdatePw: 'पासवर्ड अपडेट करें', acLogout: 'लॉग आउट', acDelete: '🗑️ अकाउंट डिलीट करें',
     acPwChanged: '✅ पासवर्ड बदल गया', acLoggedOut: 'लॉग आउट हो गए', acDeleted: 'अकाउंट डिलीट हो गया',
     acPwShort: 'पासवर्ड कम से कम 8 अक्षर का होना चाहिए।',
     acDeleteConfirm1: 'अपना अकाउंट स्थायी रूप से डिलीट करें?\nआपकी सारी सेव की हुई चैट और मीडिया मिट जाएगा। यह वापस नहीं हो सकता।',
     acDeleteConfirm2: 'क्या आप पूरी तरह निश्चित हैं? यह अपरिवर्तनीय है।',
-    // ---- Stats modal ----
+
     sStats: 'आँकड़े', sNoData: 'कोई डेटा नहीं।', sMessages: 'मैसेज', sMedia: 'मीडिया', sWords: 'शब्द',
     sEmojis: 'इमोजी', sActiveDays: 'सक्रिय दिन', sMsgsDay: 'मैसेज / दिन', sWhoMost: 'सबसे ज़्यादा किसने बात की',
     sBusiest: '🔥 सबसे व्यस्त दिन:', sMessagesLc: 'मैसेज',
-    // ---- Save modal ----
+
     svTitle: '☁ हिस्ट्री में सेव करें', svSub: 'चैट व्यवस्थित रखने के लिए कैटेगरी दें (वैकल्पिक)।',
     svCustom: '…या अपनी कैटेगरी लिखें', svSkip: 'छोड़ें', svSave: 'सेव करें', svSaveTo: 'सेव करें', svSaving: 'सेव हो रहा…',
-    // ---- Filter modal ----
+
     fTitle: '🔎 चैट फ़िल्टर करें', fSender: 'भेजने वाला', fEveryone: 'सभी', fFrom: 'किस तारीख से',
     fBeginning: 'शुरुआत', fTo: 'किस तारीख तक', fEnd: 'अंत', fMediaOnly: 'सिर्फ़ मीडिया वाले मैसेज दिखाएँ 📎',
     fShowing: 'दिखा रहे', fOf: 'में से', fMessages: 'मैसेज', fClear: 'सब हटाएँ', fDone: 'हो गया',
-    // ---- Gallery modal ----
+
     gTitle: '🖼️ मीडिया गैलरी', gAll: 'सभी', gPhotos: '📷 फ़ोटो', gVideos: '🎥 वीडियो', gEmpty: 'यहाँ दिखाने के लिए कोई मीडिया नहीं। 📭',
-    // ---- Translate modal ----
+
     trTitle: '🌐 अनुवाद', trWhole: 'पूरी चैट का अनुवाद करें', trFrom: 'से', trTo: 'में',
     trAuto: 'अपने-आप पहचानें', trAutoShort: 'ऑटो', trEnglish: 'अंग्रेज़ी', trHindi: 'हिन्दी',
     trGo: 'चैट अनुवाद करें', trReGo: 'फिर से अनुवाद करें', trGoing: 'अनुवाद हो रहा…',
     trNote: 'चैट अनुवाद पर स्विच हो जाती है — चैट पर लगे बैज से कभी भी मूल पर वापस जा सकते हैं।',
     trQuick: 'एक लाइन का झटपट अनुवाद', trQuickPh: 'अनुवाद के लिए टेक्स्ट लिखें या पेस्ट करें…', trGoSm: 'अनुवाद', trCopy: '⧉ कॉपी',
-    // ---- App toasts / prompts / shared ----
+
     tExportImg: 'इमेज तैयार हो रही… (बड़ी चैट में थोड़ा समय लगता है)', tExportPdf: 'PDF तैयार हो रही… (बड़ी चैट में थोड़ा समय लगता है)',
     tDownloaded: '✅ डाउनलोड हो गया', tBook: '📖 आपकी यादगार किताब बन रही… (थोड़ा समय लग सकता है)', tBookDone: '✅ किताब डाउनलोड हो गई',
     tNothingTr: 'यहाँ अनुवाद करने के लिए कुछ नहीं है।', tTrProgress: '🌐 अनुवाद हो रहा', tTrDone: '✅ चैट अनुवादित',
@@ -380,7 +378,7 @@ const DICT = {
     pMsgTime: 'मैसेज का समय (जैसे 8:45 PM):', pMsgDate: 'इस दिन की तारीख (जैसे 25/12/2024):',
     pSystemMsg: 'सिस्टम मैसेज (बीच में):', pCallDetails: 'कॉल की जानकारी (जैसे "9 min" या "No answer"):',
     shSharedRO: '💬 शेयर की हुई चैट · केवल-पढ़ने के लिए', shOpen: 'चैट व्यूअर खोलें →', shOpening: 'शेयर की हुई चैट खुल रही…',
-    // ---- Book Studio ----
+
     bkTitle: 'बुक स्टूडियो', bkTitleLabel: 'बुक का शीर्षक', bkSubtitle: 'उपशीर्षक',
     bkTheme: 'थीम', bkBorder: 'पेज बॉर्डर', bkInclude: 'शामिल करें',
     bkCoverPage: 'कवर पेज', bkAvatar: 'कवर पर अवतार', bkStats: 'कवर पर आँकड़े',
@@ -394,14 +392,14 @@ const DICT = {
     bkPhoneFrame: '📱 फ़ोन फ़्रेम', bkTwoCol: '2 कॉलम / पेज', bkContents: 'कंटेंट्स पेज',
     bkBigChatHint: '💡 बड़ी चैट? “2 कॉलम / पेज” ऑन करें — पेज लगभग आधे हो जाते हैं, PDF बहुत तेज़ बनती है और क्वालिटी भी नहीं घटती।',
     bkBuilding: 'पेज {a} / {b}', bkBuildWait: 'किताब बनने तक यह टैब खुला रखें।',
-    // ---- Keepsake section ----
+
     keepTitle: 'सँभालकर रखने के लिए',
     keepBody: 'पूरी बातचीत को एक जिल्दबंद यादगार किताब बना दें — फ़ॉइल में छपा बुककलॉथ कवर, हर महीने का अपना चैप्टर, कंटेंट्स पेज और हर पन्ने पर पेज नंबर।',
     keepP1: 'छह कपड़े की थीम, सात पेज साइज़',
     keepP2: 'बबल बिल्कुल वैसे ही छपते हैं — टिक, रिप्लाई, रिएक्शन, फ़ोटो',
     keepP3: 'प्रिंट करवा लें, या बस PDF रख लें',
     keepAlt: 'खुली हुई यादगार किताब, जिसके पन्ने पर छपी हुई चैट है',
-    // ---- Share (QR) ----
+
     shareTitle: 'चैट शेयर करें', shareScan: 'ये चैट खोलने के लिए स्कैन करें',
     shareCopy: 'लिंक कॉपी करें', shareCopied: '✅ लिंक कॉपी हो गया',
     shareDownload: 'QR डाउनलोड करें', shareDownloaded: '✅ QR कार्ड डाउनलोड हो गया',
@@ -411,7 +409,7 @@ const DICT = {
     shareNeverExpires: '♾ कभी एक्सपायर नहीं', shareExpiresIn: '⏱ एक्सपायर होगा',
     shareTtlNever: 'कभी नहीं', shareTtl5m: '5 मिनट', shareTtl1h: '1 घंटा',
     shareTtl5h: '5 घंटे', shareTtl24h: '24 घंटे', shareTtl7d: '7 दिन',
-    // ---- Continue Chat (live rooms) ----
+
     ccLiveTag: 'चैट जारी रखें · लाइव',
     ccLastSeen: 'पिछली बार देखा', ccJustNow: 'अभी-अभी', ccToday: 'आज', ccYesterday: 'कल',
     ccSetupTitle: 'इस चैट को लाइव जारी रखें 🔗',
@@ -436,14 +434,14 @@ const DICT = {
     ccErrPinShort: 'PIN कम से कम 4 अक्षर का होना चाहिए।', ccErrEnterPin: 'PIN डालें।', ccErrWrongPin: 'गलत PIN, या यह चैट अब मौजूद नहीं है।',
     ccMicPerm: 'वॉइस मैसेज रिकॉर्ड करने के लिए माइक की अनुमति दें।',
     ccScreenshot: 'चैट को इमेज के रूप में सेव करें',
-    // ---- Calls (WebRTC) ----
+
     callVoice: 'वॉइस कॉल', callVideo: 'वीडियो कॉल',
     callCalling: 'कॉल हो रही…', callRingingVoice: 'वॉइस कॉल आ रही है', callRingingVideo: 'वीडियो कॉल आ रही है',
     callConnecting: 'कनेक्ट हो रहा…', callAccept: 'उठाएँ', callDecline: 'अस्वीकारें', callEnd: 'कॉल खत्म करें',
     callMute: 'म्यूट', callUnmute: 'अनम्यूट', callCam: 'कैमरा',
     callEncrypted: '🔒 एंड-टू-एंड एन्क्रिप्टेड', callDeclined: 'कॉल अस्वीकार', callEnded: 'कॉल खत्म',
     callErrMedia: 'कॉल के लिए माइक/कैमरा की अनुमति दें।', callFailed: 'कॉल कनेक्ट नहीं हो पाई।',
-    // ---- My continue-chats ----
+
     mrHeaderTitle: 'मेरी जारी चैट', mrTitle: 'आपकी लाइव चैट 🔗',
     mrSub: 'लिंक खो गया? यहाँ से चैट दोबारा खोलें — और लेबल, नाम बदलें या डिलीट करें।',
     mrOnDevice: 'इस डिवाइस पर', mrNoneDevice: 'इस डिवाइस पर अभी कोई चैट सेव नहीं।',
@@ -476,7 +474,7 @@ function initialLang(): Lang {
 export function LangProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(initialLang);
   const setLang = useCallback((l: Lang) => {
-    try { localStorage.setItem('lang', l); } catch { /* ignore */ }
+    try { localStorage.setItem('lang', l); } catch {  }
     document.documentElement.lang = l;
     setLangState(l);
   }, []);

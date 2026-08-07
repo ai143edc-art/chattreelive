@@ -14,7 +14,6 @@ interface Props {
   onOpen: (url: string, kind: 'img' | 'video') => void;
 }
 
-/** A dedicated grid of every photo & video in the chat. Click to open in the lightbox. */
 export default function GalleryModal({ open, onClose, messages, mediaMap, onOpen }: Props) {
   useModal(open, onClose);
   const { t } = useLang();

@@ -1,29 +1,14 @@
-/**
- * Book Studio configuration: themes, page borders, and the saved-template store.
- * Everything the export needs to render a personalised keepsake book.
- */
-
-/**
- * A cover is a piece of bookcloth with the type foil-stamped into it —
- * not a gradient card. `cloth` is the weave colour, `clothEdge` darkens the
- * vignette and spine, and everything printed on the cover is `foil`.
- *
- * The inside of the book is a different material: `paper` is the printed page,
- * and the chat sits on a `chatBg` plate patterned in `doodleInk`. Those two
- * are what make an Oxblood book read differently from a Deep Ocean one once
- * you turn past the cover.
- */
 export interface BookTheme {
   key: string;
   name: string;
-  cloth: string;      // bookcloth base colour
-  clothEdge: string;  // vignette + spine shade
-  foil: string;       // stamped type, rules and frame
-  accent: string;     // running heads, chapter openers, folios, page frames
-  paper: string;      // the printed page the plate is mounted on
-  chatBg: string;     // the chat plate, a shade deeper than the paper
-  doodleInk: string;  // the wallpaper doodle drawn on that plate
-  light?: boolean;    // a pale cloth stamped in dark foil
+  cloth: string;
+  clothEdge: string;
+  foil: string;
+  accent: string;
+  paper: string;
+  chatBg: string;
+  doodleInk: string;
+  light?: boolean;
 }
 
 export const BOOK_THEMES: BookTheme[] = [
@@ -47,7 +32,6 @@ export const BOOK_THEMES: BookTheme[] = [
     paper: '#faf5ea', chatBg: '#f1e9d8', doodleInk: '#dbceb2', light: true },
 ];
 
-/** rgba() from a #rgb / #rrggbb hex, for tinting rules and frames. */
 export function rgba(hex: string, a: number): string {
   const h = hex.replace('#', '');
   const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
@@ -55,11 +39,6 @@ export function rgba(hex: string, a: number): string {
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
 }
 
-/**
- * A fine woven texture. Real bookcloth is a crosshatch you can barely see at
- * arm's length, so keep the pitch tight and the contrast almost nothing —
- * anything stronger reads as graph paper.
- */
 export const WEAVE_TILE = 5;
 export function weaveUrl(th: BookTheme): string {
   const hex = th.light ? '3a2f1c' : 'ffffff';
@@ -74,7 +53,6 @@ export function weaveCss(th: BookTheme): string {
   return `background-image:${weaveUrl(th)};background-size:${WEAVE_TILE}px ${WEAVE_TILE}px;`;
 }
 
-/** The darkening vignette that gives the cloth its depth. */
 export function vignetteBg(th: BookTheme): string {
   const shade = th.light ? 'rgba(90,70,40,.16)' : 'rgba(0,0,0,.42)';
   return `radial-gradient(118% 86% at 50% 38%,rgba(0,0,0,0) 44%,${shade} 100%)`;
@@ -83,12 +61,11 @@ export function vignetteCss(th: BookTheme): string {
   return `background:${vignetteBg(th)};`;
 }
 
-/** Swatch used in Book Studio's theme picker. */
 export function swatchCss(th: BookTheme): string {
   return `linear-gradient(135deg,${th.cloth} 0%,${th.cloth} 55%,${th.clothEdge} 100%)`;
 }
 
-export interface BookSize { key: string; name: string; w: number; h: number }  // mm, portrait
+export interface BookSize { key: string; name: string; w: number; h: number }
 export const BOOK_SIZES: BookSize[] = [
   { key: 'a4', name: 'A4', w: 210, h: 297 },
   { key: 'a5', name: 'A5 (book)', w: 148, h: 210 },
@@ -119,14 +96,14 @@ export interface BookConfig {
   dedication: string;
   themeKey: string;
   borderKey: string;
-  sizeKey: string;        // page size (A4, A5, Square, …)
-  serif: boolean;         // elegant serif typography on the book chrome
-  showWallpaper: boolean; // put the chat wallpaper behind the pages
-  phoneFrame: boolean;    // render the chat inside a phone mockup
-  twoColumns: boolean;    // two chat columns per page (fewer pages)
+  sizeKey: string;
+  serif: boolean;
+  showWallpaper: boolean;
+  phoneFrame: boolean;
+  twoColumns: boolean;
   showCover: boolean;
-  showTitlePage: boolean; // inner title page after the cover
-  showContents: boolean;  // contents page listing each month and its page
+  showTitlePage: boolean;
+  showContents: boolean;
   showAvatar: boolean;
   showStats: boolean;
   showChapters: boolean;
@@ -134,7 +111,6 @@ export interface BookConfig {
   showClosing: boolean;
 }
 
-/** Serif = premium/print feel; sans = modern. Chat bubbles always stay sans. */
 export const SERIF_STACK = "Georgia,'Times New Roman','Noto Serif',serif";
 export const SANS_STACK = "'Segoe UI',system-ui,-apple-system,'Noto Sans','Noto Sans Devanagari',sans-serif";
 
@@ -152,7 +128,6 @@ export function themeOf(key: string): BookTheme {
   return BOOK_THEMES.find((t) => t.key === key) || BOOK_THEMES[0];
 }
 
-/* ---------------- Saved templates (localStorage) ---------------- */
 const TPL_KEY = 'chattree_book_templates';
 export interface BookTemplate { name: string; config: BookConfig }
 
@@ -167,11 +142,11 @@ export function saveTemplate(name: string, config: BookConfig): BookTemplate[] {
   const list = loadTemplates().filter((t) => t.name !== name);
   list.unshift({ name, config: { ...config } });
   const capped = list.slice(0, 20);
-  try { localStorage.setItem(TPL_KEY, JSON.stringify(capped)); } catch { /* ignore quota */ }
+  try { localStorage.setItem(TPL_KEY, JSON.stringify(capped)); } catch {  }
   return capped;
 }
 export function deleteTemplate(name: string): BookTemplate[] {
   const list = loadTemplates().filter((t) => t.name !== name);
-  try { localStorage.setItem(TPL_KEY, JSON.stringify(list)); } catch { /* ignore */ }
+  try { localStorage.setItem(TPL_KEY, JSON.stringify(list)); } catch {  }
   return list;
 }
