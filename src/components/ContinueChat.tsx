@@ -10,6 +10,7 @@ import {
   type RoomMessage, type Reaction, type ReplyTo, type Side, type HistoryMessage,
 } from '../lib/rooms';
 import { useCall } from '../lib/webrtcCall';
+import { askNotify, notify } from '../lib/notify';
 import CallOverlay from './CallOverlay';
 
 interface Props {
@@ -108,13 +109,20 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
   useEffect(() => {
     if (phase !== 'chat' || !room) return;
     let alive = true;
+    askNotify();
 
     const merge = (prev: RoomMessage[], m: RoomMessage) => {
       const i = prev.findIndex((x) => x.id === m.id);
       if (i === -1) return [...prev, m].sort((a, b) => (a.id || 0) - (b.id || 0));
       const copy = prev.slice(); copy[i] = m; return copy;
     };
-    const unsub = subscribeRoom(room.id, (m) => setLive((prev) => merge(prev, m)));
+    const unsub = subscribeRoom(room.id, (m) => setLive((prev) => {
+      const maxId = prev.reduce((a, x) => Math.max(a, x.id || 0), 0);
+      if ((m.id || 0) > maxId && m.sender !== room.side && !m.deleted) {
+        notify(m.senderName || room.otherName, m.body || (m.mediaType === 'video' ? t('ccPvVideo') : m.mediaType === 'audio' ? t('ccPvVoice') : t('ccPvPhoto')));
+      }
+      return merge(prev, m);
+    }));
     fetchRoomMessages(room.id).then((past) => { if (alive) setLive((prev) => past.reduce(merge, prev)); }).catch(() => {});
 
     const tp = subscribeTyping(room.id, room.myName, (name) => {
@@ -145,6 +153,11 @@ export default function ContinueChat({ mode, importedMessages, importedSenders, 
   }, [phase, room]);
 
   useEffect(() => { if (bodyRef.current) bodyRef.current.scrollTop = bodyRef.current.scrollHeight; }, [live, phase, otherTyping]);
+
+  useEffect(() => {
+    if (call.state === 'ringing') notify(room?.otherName || 'Chat Tree', call.isVideo ? t('callRingingVideo') : t('callRingingVoice'));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [call.state]);
 
   useEffect(() => {
     if (phase !== 'chat') return;
