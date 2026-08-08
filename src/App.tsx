@@ -133,6 +133,7 @@ export default function App() {
   const [bookProgress, setBookProgress] = useState<{ done: number; total: number } | null>(null);
   const [sharedLoading, setSharedLoading] = useState(!!new URLSearchParams(location.search).get('c'));
   const [toastMsg, setToastMsg] = useState('');
+  const [toastProg, setToastProg] = useState<number | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const toastTimer = useRef<number | undefined>(undefined);
 
@@ -258,6 +259,7 @@ export default function App() {
 
   function toast(msg: string, ms = 2500) {
     setToastMsg(msg);
+    setToastProg(null);
     if (toastTimer.current) clearTimeout(toastTimer.current);
     if (msg && ms > 0) toastTimer.current = window.setTimeout(() => setToastMsg(''), ms);
   }
@@ -448,7 +450,8 @@ export default function App() {
   async function onExportVideo() {
     if (!messages.length) { toast(t('tLoadFirst'), 3000); return; }
     toast(t('tVideo'), 0);
-    try { await exportVideo(contactTitle); toast(t('tVideoDone'), 2500); }
+    setToastProg(0);
+    try { await exportVideo(contactTitle, (p) => setToastProg(p)); toast(t('tVideoDone'), 2500); }
     catch (e) { toast('❌ ' + ((e as Error).message || e), 4000); }
   }
 
@@ -593,12 +596,20 @@ export default function App() {
     );
   }
 
+  const toastPct = toastProg == null ? null : Math.round(Math.min(1, Math.max(0, toastProg)) * 100);
+  const toastNode = (
+    <div className={'toast' + (toastMsg ? ' show' : '')}>
+      <span>{toastMsg}{toastPct != null ? ` ${toastPct}%` : ''}</span>
+      {toastPct != null && <div className="toast-bar"><div className="toast-bar-fill" style={{ width: toastPct + '%' }} /></div>}
+    </div>
+  );
+
   if (screen === 'landing') {
     return (
       <>
         <Landing onLaunch={() => setScreen('upload')} onPrivacy={() => setScreen('privacy')} onTerms={() => setScreen('terms')} />
         <ResetPasswordModal open={recovery} onDone={() => setRecovery(false)} toast={toast} />
-        <div className={'toast' + (toastMsg ? ' show' : '')}>{toastMsg}</div>
+        {toastNode}
       </>
     );
   }
@@ -622,7 +633,7 @@ export default function App() {
         />
         <Lightbox media={lightbox} onClose={() => setLightbox(null)} />
         <ResetPasswordModal open={recovery} onDone={() => setRecovery(false)} toast={toast} />
-        <div className={'toast' + (toastMsg ? ' show' : '')}>{toastMsg}</div>
+        {toastNode}
       </>
     );
   }
@@ -712,7 +723,7 @@ export default function App() {
         defaultTitle={contactTitle} avatar={avatar} meName={meName} senders={senders}
         msgCount={stats.total} days={stats.days} mediaCount={stats.mediaCount} dateRange={bookDateRange} />
       <ResetPasswordModal open={recovery} onDone={() => setRecovery(false)} toast={toast} />
-      <div className={'toast' + (toastMsg ? ' show' : '')}>{toastMsg}</div>
+      {toastNode}
     </>
   );
 }
