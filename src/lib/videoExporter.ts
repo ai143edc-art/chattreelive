@@ -1,4 +1,4 @@
-function drawWatermark(ctx: CanvasRenderingContext2D, W: number, H: number) {
+function drawWatermark(ctx: CanvasRenderingContext2D, W: number, H: number, bottomInset = 0) {
   const fs = Math.min(28, Math.max(14, Math.round(W * 0.022)));
   const text = 'chattreeapp.fun';
   ctx.save();
@@ -8,7 +8,7 @@ function drawWatermark(ctx: CanvasRenderingContext2D, W: number, H: number) {
   const chipW = ctx.measureText(text).width + padX * 2;
   const chipH = fs + padY * 2;
   const margin = Math.round(fs * 0.85);
-  const x = W - chipW - margin, y = H - chipH - margin, r = chipH / 2;
+  const x = W - chipW - margin, y = H - bottomInset - chipH - margin, r = chipH / 2;
   ctx.beginPath();
   ctx.moveTo(x + r, y);
   ctx.arcTo(x + chipW, y, x + chipW, y + chipH, r);
@@ -28,6 +28,7 @@ export async function exportVideo(filename: string, onProgress?: (p: number) => 
   const screen = document.querySelector('.screen') as HTMLElement | null;
   const phone = document.querySelector('.phone') as HTMLElement | null;
   const body = document.querySelector('.wa-body') as HTMLElement | null;
+  const compose = document.querySelector('.wa-compose') as HTMLElement | null;
   if (!screen || !phone || !body) throw new Error('Open a chat first.');
   if (typeof (HTMLCanvasElement.prototype as unknown as { captureStream?: unknown }).captureStream !== 'function' || typeof MediaRecorder === 'undefined') {
     throw new Error('Video export is not supported in this browser.');
@@ -47,9 +48,15 @@ export async function exportVideo(filename: string, onProgress?: (p: number) => 
   let srcEmpty: HTMLCanvasElement;
   let rects: number[];
   let fixedTopH: number;
+  let footerH = 0;
+  let footerSrcTop = 0;
   try {
     const screenTop = screen.getBoundingClientRect().top;
     fixedTopH = Math.round((body.getBoundingClientRect().top - screenTop) * SCALE);
+    if (compose) {
+      footerH = Math.round(compose.getBoundingClientRect().height * SCALE);
+      footerSrcTop = Math.round((compose.getBoundingClientRect().top - screenTop) * SCALE);
+    }
     srcFull = await html2canvas(screen, { scale: SCALE, useCORS: true, backgroundColor: null, logging: false });
     rects = [...screen.querySelectorAll<HTMLElement>('.row[data-mi]')]
       .map((el) => (el.getBoundingClientRect().bottom - screenTop) * SCALE);
@@ -65,11 +72,12 @@ export async function exportVideo(filename: string, onProgress?: (p: number) => 
     body.style.overflow = prev.bodyOv;
   }
 
-  if (!rects.length) rects = [srcFull.height];
+  const contentBottom = footerH ? footerSrcTop : srcFull.height;
+  if (!rects.length) rects = [contentBottom];
   const W = srcFull.width;
   const H = Math.min(viewportH, srcFull.height);
-  const bodyViewH = H - fixedTopH;
-  const bodyScrollMax = Math.max(0, srcFull.height - fixedTopH - bodyViewH);
+  const bodyViewH = H - fixedTopH - footerH;
+  const bodyScrollMax = Math.max(0, contentBottom - fixedTopH - bodyViewH);
 
   const holdOf = (i: number) => {
     const prevB = i === 0 ? fixedTopH : rects[i - 1];
@@ -107,8 +115,9 @@ export async function exportVideo(filename: string, onProgress?: (p: number) => 
       const y1 = Math.min(rects[c], sy + bodyViewH);
       if (y1 > y0) ctx.drawImage(srcFull, 0, y0, W, y1 - y0, 0, fixedTopH, W, y1 - y0);
     }
+    if (footerH) ctx.drawImage(srcFull, 0, footerSrcTop, W, footerH, 0, H - footerH, W, footerH);
     ctx.drawImage(srcFull, 0, 0, W, fixedTopH, 0, 0, W, fixedTopH);
-    drawWatermark(ctx, W, H);
+    drawWatermark(ctx, W, H, footerH);
   };
 
   draw(0);
