@@ -96,7 +96,7 @@ const DICT = {
     vJumpTop: '⬆️ Jump to top', vJumpLatest: '⬇️ Jump to latest', vTranslated: '🌐 Translated',
     vShown: 'shown', vNoResults: 'No results', vShowOriginal: 'Show original',
     vActStats: 'Stats', vActGallery: 'Gallery', vActFilter: 'Filter', vActTranslate: 'Translate',
-    vActImage: 'Image', vActPdf: 'PDF', vActBook: 'Book', vActSave: 'Save', vActSaving: 'Saving…',
+    vActImage: 'Image', vActPdf: 'PDF', vActVideo: 'Video', vActBook: 'Book', vActSave: 'Save', vActSaving: 'Saving…',
     vActTheme: 'Theme', vActFrame: 'Frame', vActNew: 'New chat',
     vInsMissed: '📞 Missed voice call', vInsVoice: '📞 Voice call', vInsVideo: '📹 Video call',
     vInsEncrypt: '🔒 Encryption notice', vInsDeleted: '🚫 Deleted message', vInsSystem: '💬 Custom system text',
@@ -143,6 +143,7 @@ const DICT = {
 
     tExportImg: 'Preparing image… (large chats take a moment)', tExportPdf: 'Preparing PDF… (large chats take a moment)',
     tDownloaded: '✅ Downloaded', tBook: '📖 Building your keepsake book… (this can take a moment)', tBookDone: '✅ Book downloaded',
+    tVideo: '🎬 Making your chat video… keep this tab open', tVideoDone: '✅ Video downloaded',
     tNothingTr: 'Nothing to translate here.', tTrProgress: '🌐 Translating', tTrDone: '✅ Chat translated',
     tSaved: '✅ Saved to your history!', tSaveFail: '❌ Save failed:', tUploading: 'Uploading media',
     tSavedPartial: '⚠️ Saved, but {a} of {b} photos didn\'t upload — tap Save again to retry them.',
@@ -323,7 +324,7 @@ const DICT = {
     vJumpTop: '⬆️ ऊपर जाएँ', vJumpLatest: '⬇️ नवीनतम पर जाएँ', vTranslated: '🌐 अनुवादित',
     vShown: 'दिख रहे', vNoResults: 'कोई नतीजा नहीं', vShowOriginal: 'मूल दिखाएँ',
     vActStats: 'आँकड़े', vActGallery: 'गैलरी', vActFilter: 'फ़िल्टर', vActTranslate: 'अनुवाद',
-    vActImage: 'इमेज', vActPdf: 'PDF', vActBook: 'बुक', vActSave: 'सेव', vActSaving: 'सेव हो रहा…',
+    vActImage: 'इमेज', vActPdf: 'PDF', vActVideo: 'वीडियो', vActBook: 'बुक', vActSave: 'सेव', vActSaving: 'सेव हो रहा…',
     vActTheme: 'थीम', vActFrame: 'फ़्रेम', vActNew: 'नई चैट',
     vInsMissed: '📞 मिस्ड वॉइस कॉल', vInsVoice: '📞 वॉइस कॉल', vInsVideo: '📹 वीडियो कॉल',
     vInsEncrypt: '🔒 एन्क्रिप्शन नोटिस', vInsDeleted: '🚫 डिलीटेड मैसेज', vInsSystem: '💬 कस्टम सिस्टम टेक्स्ट',
@@ -370,6 +371,7 @@ const DICT = {
 
     tExportImg: 'इमेज तैयार हो रही… (बड़ी चैट में थोड़ा समय लगता है)', tExportPdf: 'PDF तैयार हो रही… (बड़ी चैट में थोड़ा समय लगता है)',
     tDownloaded: '✅ डाउनलोड हो गया', tBook: '📖 आपकी यादगार किताब बन रही… (थोड़ा समय लग सकता है)', tBookDone: '✅ किताब डाउनलोड हो गई',
+    tVideo: '🎬 आपकी चैट का वीडियो बन रहा… यह टैब खुला रखें', tVideoDone: '✅ वीडियो डाउनलोड हो गया',
     tNothingTr: 'यहाँ अनुवाद करने के लिए कुछ नहीं है।', tTrProgress: '🌐 अनुवाद हो रहा', tTrDone: '✅ चैट अनुवादित',
     tSaved: '✅ आपकी हिस्ट्री में सेव हो गई!', tSaveFail: '❌ सेव नहीं हुआ:', tUploading: 'मीडिया अपलोड हो रहा',
     tSavedPartial: '⚠️ सेव हो गई, पर {b} में से {a} फ़ोटो अपलोड नहीं हुईं — दोबारा Save दबाकर रीट्राई करें।',

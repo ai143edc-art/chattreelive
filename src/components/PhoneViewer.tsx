@@ -64,6 +64,7 @@ interface Props {
     onTranslate: () => void;
     onExportImg: () => void;
     onExportPdf: () => void;
+    onExportVideo: () => void;
     onExportBook: () => void;
     onSave: () => void;
     saving: boolean;
@@ -217,6 +218,7 @@ export default function PhoneViewer(props: Props) {
                   <div className="ap-item" onClick={() => run(act.onTranslate)}><span className="ap-circle" style={{ background: '#2aa86b' }}>🌐</span>{t('vActTranslate')}</div>
                   <div className="ap-item" onClick={() => run(act.onExportImg)}><span className="ap-circle" style={{ background: '#bf59cf' }}>🖼️</span>{t('vActImage')}</div>
                   <div className="ap-item" onClick={() => run(act.onExportPdf)}><span className="ap-circle" style={{ background: '#d3396d' }}>📄</span>{t('vActPdf')}</div>
+                  <div className="ap-item" onClick={() => run(act.onExportVideo)}><span className="ap-circle" style={{ background: '#0a8f68' }}>🎬</span>{t('vActVideo')}</div>
                   <div className="ap-item" onClick={() => run(act.onExportBook)}><span className="ap-circle" style={{ background: '#8a5a2b' }}>📖</span>{t('vActBook')}</div>
                   <div className="ap-item" onClick={() => run(act.onSave)}><span className="ap-circle" style={{ background: '#47c467' }}>{act.saving ? <span className="spinner btn" /> : '☁️'}</span>{act.saving ? t('vActSaving') : t('vActSave')}</div>
                   <div className="ap-item" onClick={() => run(act.onTheme)}><span className="ap-circle" style={{ background: '#7f66fe' }}>{theme === 'dark' ? '🌙' : '☀️'}</span>{t('vActTheme')}</div>
