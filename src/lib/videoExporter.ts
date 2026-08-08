@@ -35,8 +35,6 @@ export async function exportVideo(filename: string, onProgress?: (p: number) => 
 
   const SCALE = 2;
   const viewportH = Math.round(screen.clientHeight * SCALE);
-  const screenTop0 = screen.getBoundingClientRect().top;
-  const fixedTopH = Math.round((body.getBoundingClientRect().top - screenTop0) * SCALE);
 
   const html2canvas = (await import('html2canvas')).default;
   const prev = { transform: phone.style.transform, screenH: screen.style.height, bodyH: body.style.height, bodyOv: body.style.overflow };
@@ -48,8 +46,10 @@ export async function exportVideo(filename: string, onProgress?: (p: number) => 
   let srcFull: HTMLCanvasElement;
   let srcEmpty: HTMLCanvasElement;
   let rects: number[];
+  let fixedTopH: number;
   try {
     const screenTop = screen.getBoundingClientRect().top;
+    fixedTopH = Math.round((body.getBoundingClientRect().top - screenTop) * SCALE);
     srcFull = await html2canvas(screen, { scale: SCALE, useCORS: true, backgroundColor: null, logging: false });
     rects = [...screen.querySelectorAll<HTMLElement>('.row[data-mi]')]
       .map((el) => (el.getBoundingClientRect().bottom - screenTop) * SCALE);
@@ -100,7 +100,6 @@ export async function exportVideo(filename: string, onProgress?: (p: number) => 
       const ease = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
       s = from + (target - from) * ease;
     }
-    ctx.drawImage(srcFull, 0, 0, W, fixedTopH, 0, 0, W, fixedTopH);
     const sy = fixedTopH + s;
     ctx.drawImage(srcEmpty, 0, sy, W, bodyViewH, 0, fixedTopH, W, bodyViewH);
     if (c >= 0) {
@@ -108,6 +107,7 @@ export async function exportVideo(filename: string, onProgress?: (p: number) => 
       const y1 = Math.min(rects[c], sy + bodyViewH);
       if (y1 > y0) ctx.drawImage(srcFull, 0, y0, W, y1 - y0, 0, fixedTopH, W, y1 - y0);
     }
+    ctx.drawImage(srcFull, 0, 0, W, fixedTopH, 0, 0, W, fixedTopH);
     drawWatermark(ctx, W, H);
   };
 
